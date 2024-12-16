@@ -18,9 +18,9 @@ class LcaPractitioner(BaseModel):
     Information about a LCA practitioner.
     """
 
-    name: Optional[str]
-    organization: Optional[str]
-    mail: Optional[str]
+    name: Optional[str] = None
+    organization: Optional[str] = None
+    mail: Optional[str] = None
 
 
 class LcaStudy(BaseModel):
@@ -29,12 +29,12 @@ class LcaStudy(BaseModel):
     reproducibility.
     """
 
-    link: Optional[str]
-    description: Optional[str]
-    date: Optional[str]
-    version: Optional[str]
-    license: Optional[str]
-    appabuild_version: Optional[str]
+    link: Optional[str] = None
+    description: Optional[str] = None
+    date: Optional[str] = None
+    version: Optional[str] = None
+    license: Optional[str] = None
+    appabuild_version: Optional[str] = None
 
 
 class ModelMetadata(BaseModel):
@@ -43,9 +43,9 @@ class ModelMetadata(BaseModel):
     impact model.
     """
 
-    author: Optional[LcaPractitioner]
-    reviewer: Optional[LcaPractitioner]
-    report: Optional[LcaStudy]
+    author: Optional[LcaPractitioner] = None
+    reviewer: Optional[LcaPractitioner] = None
+    report: Optional[LcaStudy] = None
 
     def to_dict(self):
         """
