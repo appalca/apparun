@@ -19,5 +19,8 @@ venv.bak/
 *.idea
 *.iml
 
-# Outputs
+# Data
+data/
 outputs/
+
+*.log

@@ -1,0 +1,35 @@
+metadata:
+  author:
+    name: LCA author
+    organization: CEA
+    mail: lca.author@cea.fr
+  reviewer:
+    name: LCA reviewer
+    organization: CEA
+    mail: lca.reviewer@cea.fr
+  report:
+    link: https://link.org/
+    description: "An over simplified system for testing purpose"
+    date: "03/12/2024"
+    version: "1"
+    license: proprietary
+    appabuild_version: "0.1"
+parameters: {}
+tree:
+  name: system
+  models:
+    EFV3_CLIMATE_CHANGE: '1.3830513221576728e-06'
+    EFV3_ECOTOXICITY_FRESHWATER: '4.365302017373894e-12'
+    EFV3_LAND_USE: '0.0'
+  direct_impacts:
+    EFV3_CLIMATE_CHANGE: '1.3830513221576728e-06'
+    EFV3_ECOTOXICITY_FRESHWATER: '4.365302017373894e-12'
+    EFV3_LAND_USE: '0.0'
+  scaled_direct_impacts:
+    EFV3_CLIMATE_CHANGE: '1.3830513221576728e-06'
+    EFV3_ECOTOXICITY_FRESHWATER: '4.365302017373894e-12'
+    EFV3_LAND_USE: '0.0'
+  properties: {}
+  amount: '1.0'
+  children: []
+

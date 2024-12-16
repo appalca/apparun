@@ -9,8 +9,6 @@ class MethodFullName(str, Enum):
     So far, only some ReCiPe methods, and all EF v3.0 impact methods are supported.
     """
 
-    _settings_ = NoAlias
-
     # EFV3
     EFV3_ACIDIFICATION = "('EF v3.0', 'acidification', 'accumulated exceedance (AE)')"
     EFV3_CLIMATE_CHANGE = (
