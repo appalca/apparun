@@ -20,7 +20,7 @@ venv.bak/
 *.iml
 
 # Data
-data/
+/data/
 outputs/
 
 *.log
