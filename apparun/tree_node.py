@@ -66,7 +66,11 @@ class NodeScores(BaseModel):
         value.
         """
         all_values = set(
-            [node.properties.get_property_value(property_name) for node in nodes_scores]
+            [
+                node.properties.get_property_value(property_name)
+                for node in nodes_scores
+                if len(node.properties.properties) > 0
+            ]
         )
         nodes_by_value = {
             value: [
