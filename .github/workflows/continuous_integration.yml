@@ -32,8 +32,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-appabuild-${{ hashFiles('**/pyproject.toml') }} # Generates a key dynamicly
-          restore-keys: ${{ runner.os }}-appabuild-
+          key: ${{ runner.os }}-apparun-${{ hashFiles('**/pyproject.toml') }} # Generates a key dynamicly
+          restore-keys: ${{ runner.os }}-apparun-
       
       - name: Install the wheel for the cache
         run: pip install dist/*.whl --progress-bar off
