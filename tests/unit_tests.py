@@ -13,7 +13,12 @@ def test_impact_tree_calculation():
     impact_model = ImpactModel().from_yaml("data/noparam_system.yaml")
     lcia_scores = impact_model.get_scores()
     scores = sorted(lcia_scores.scores.items())
-    assert dict(scores) == {'EFV3_CLIMATE_CHANGE': 1.3830513221576728e-06, 'EFV3_ECOTOXICITY_FRESHWATER': 4.365302017373894e-12, 'EFV3_LAND_USE': 0.0}
+    assert dict(scores) == {
+        "EFV3_CLIMATE_CHANGE": 1.3830513221576728e-06,
+        "EFV3_ECOTOXICITY_FRESHWATER": 4.365302017373894e-12,
+        "EFV3_LAND_USE": 0.0,
+    }
+
 
 def test_impact_calculation_result():
     impact_model = ImpactModel().from_yaml("data/noparam_system.yaml")
