@@ -9,7 +9,7 @@ typer==0.15.1
 plotly
 fastapi
 uvicorn[standard]
-kaleido==0.1.0post
+kaleido==0.1.0post1
 SALib
 hatchling
 click==8.1.8
