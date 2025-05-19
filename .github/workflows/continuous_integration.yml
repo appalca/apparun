@@ -54,11 +54,8 @@ jobs:
       - name: Run smoke tests
         run: pytest tests/smoke
 
-      - name: Run functional tests that don't need to use an EcoInvent database
-        run: pytest tests/functional_no_db
-
-      - name: Run functional tests whose use an EcoInvent database
-        run: pytest tests/functional_db
+      - name: Run functional tests
+        run: pytest tests/functional
 
       - name: Run end to end tests
         run: pytest tests/end_to_end
