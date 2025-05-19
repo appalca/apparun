@@ -1,4 +1,3 @@
-import logging
 import os
 import time
 from functools import wraps
@@ -6,15 +5,13 @@ from typing import Dict, List, Union
 
 from apparun import results
 from apparun.impact_model import ImpactModel
+from apparun.logger import logger
 from apparun.results import get_result
 
 IMPACTS_MODEL_DIR = os.environ.get("APPARUN_IMPACT_MODELS_DIR")
-logging.basicConfig(
-    filename="apparun.log",
-    filemode="w",
-    format="%(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
+if IMPACTS_MODEL_DIR is None:
+    logger.error("Environment variable IMPACTS_MODEL_DIR is undefined")
+    exit(1)
 
 
 def execution_time_logging(func):
@@ -30,7 +27,7 @@ def execution_time_logging(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         total_time = end_time - start_time
-        logging.info(f"Function {func.__name__} executed in {total_time:.4f} seconds")
+        logger.info(f"Function {func.__name__} executed in {total_time:.4f} seconds")
         return result
 
     return execution_time_logging_wrapper
@@ -74,7 +71,9 @@ def get_valid_models() -> List[str]:
                 ImpactModel.from_yaml(os.path.join(IMPACTS_MODEL_DIR, file))
                 valid_impact_models.append(file.replace(".yaml", ""))
             except KeyError:
-                print(f"{file.replace('.yaml', '')} is not a valid impact model.")
+                logger.error(
+                    f"{file.replace('.yaml', '')} is not a valid impact model."
+                )
     return valid_impact_models
 
 

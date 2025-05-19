@@ -1,0 +1,5 @@
+lifespan: 3.0
+architecture: Maxwell
+cuda_core [256.0, 512.0, 1024.0]
+energy_per_inference: [0.05, 0.06, 0.065]
+# Rest of parameters will use the default values

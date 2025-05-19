@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import yaml
 from pydantic import BaseModel
 from SALib.analyze import sobol
+from yaml import YAMLError
 
 from apparun.impact_tree import ImpactTreeNode
+from apparun.logger import logger
 from apparun.parameters import ImpactModelParams
 from apparun.score import LCIAScores
 from apparun.tree_node import NodeScores
@@ -94,6 +96,31 @@ class ImpactModel(BaseModel):
         """
         return {parameter.name: parameter.transform for parameter in self.parameters}
 
+    def validate_parameters_values(self, values: Dict[str, Any]):
+        """
+        Validates a dict of values for the impact model parameters, so they can be used to compute the impact scores
+        or node scores. Raise an exception of type TypeError or ValueError if at least one the values is invalid.
+
+        :param values: a dict of values for the impact model parameters, if a value for a parameter is missing, it is
+        considered that the default value will be used for this parameter.
+        """
+        # Check list values are matching size and not empty
+        list_parameters = filter(lambda e: isinstance(e, list), values.values())
+        list_lens = list(map(len, list_parameters))
+        if len(list_lens) > 0:
+            if min(list_lens) != max(list_lens):
+                raise ValueError("List type parameters must have matching size")
+            elif min(list_lens) == 0:
+                raise ValueError(
+                    "List type parameters cannot have empty list as values"
+                )
+
+        params_to_validate = [
+            param for param in self.parameters if param.name in values
+        ]
+        for param in params_to_validate:
+            param.validate_values(values[param.name])
+
     def transform_parameters(
         self, parameters: Dict[str, Union[List[Union[str, float]], Union[str, float]]]
     ) -> Dict[str, Union[List[Union[str, float]], Union[str, float]]]:
@@ -124,9 +151,6 @@ class ImpactModel(BaseModel):
                 ]
                 for name, value in table.items()
             }
-        assert min(
-            len(list_parameter) for list_parameter in list_parameters.values()
-        ) == max(len(list_parameter) for list_parameter in list_parameters.values())
         full_list_parameters = {
             **{
                 parameter_name: [parameter_value]
@@ -175,11 +199,14 @@ class ImpactModel(BaseModel):
         model.
         :return: constructed impact model.
         """
-        return ImpactModel(
-            metadata=ModelMetadata.from_dict(impact_model["metadata"]),
-            parameters=ImpactModelParams.from_list(impact_model["parameters"]),
-            tree=ImpactTreeNode.from_dict(impact_model["tree"]),
-        )
+        try:
+            return ImpactModel(
+                metadata=ModelMetadata.from_dict(impact_model["metadata"]),
+                parameters=ImpactModelParams.from_list(impact_model["parameters"]),
+                tree=ImpactTreeNode.from_dict(impact_model["tree"]),
+            )
+        except KeyError:
+            logger.error("Impossible to create impact model from dict, missing key")
 
     def from_tree_children(self) -> List[ImpactModel]:
         """
@@ -201,9 +228,18 @@ class ImpactModel(BaseModel):
         model.
         :return: constructed impact model.
         """
-        with open(filepath, "r") as stream:
-            impact_model = yaml.safe_load(stream)
-            return ImpactModel.from_dict(impact_model)
+        try:
+            with open(filepath, "r") as stream:
+                impact_model = yaml.safe_load(stream)
+                return ImpactModel.from_dict(impact_model)
+        except FileNotFoundError:
+            logger.error(
+                f"No such impact model {filepath}, check that the impact model exists or that the environment variable APPARUN_IMPACT_MODELS_DIR is defined"
+            )
+            raise
+        except YAMLError:
+            logger.error(f"Invalid yaml file for the impact model {filepath}")
+            raise
 
     def get_scores(self, **params) -> LCIAScores:
         """
@@ -214,10 +250,24 @@ class ImpactModel(BaseModel):
         alongside a list of values, it will be duplicated to the appropriate length.
         :return: a dict mapping impact names and corresponding score, or list of scores.
         """
+        logger.info("Start computing the FU impact scores")
+        logger.info("Validating parameters values")
+        logger.debug("Parameters values: %s", params)
+        try:
+            self.validate_parameters_values(params)
+        except Exception as e:
+            logger.error(e)
+            raise
+        logger.info("Parameters values validated")
+
         missing_params = self.parameters.get_missing_parameter_names(params)
         default_params = self.parameters.get_default_values(missing_params)
+        logger.debug("Parameters with default values: %s", default_params)
+
         transformed_params = self.transform_parameters({**params, **default_params})
         scores = self.tree.compute(transformed_params)
+        # logger.info("Scores: %s", scores)
+        logger.info("FU impact scores computed with no error")
         return scores
 
     def get_nodes_scores(
@@ -234,8 +284,18 @@ class ImpactModel(BaseModel):
         :return: a list of dict mapping impact names and corresponding score, or list
         of scores, for each node/property value.
         """
+        logger.info("Start computing the nodes scores")
+        logger.info("Validating parameters values")
+        logger.debug("Parameters values: %s", params)
+        try:
+            self.validate_parameters_values(params)
+        except Exception as e:
+            logger.error(e)
+            raise
+        logger.info("Parameters values validated")
         missing_params = self.parameters.get_missing_parameter_names(params)
         default_params = self.parameters.get_default_values(missing_params)
+        logger.debug("Parameters with default values: %s", default_params)
         transformed_params = self.transform_parameters({**params, **default_params})
         scores = [
             NodeScores(
@@ -250,6 +310,7 @@ class ImpactModel(BaseModel):
         ]
         if by_property is not None:
             scores = NodeScores.combine_by_property(scores, by_property)
+        logger.info("Nodes scores computed with no error")
         return scores
 
     def get_uncertainty_nodes_scores(self, n) -> List[NodeScores]:
