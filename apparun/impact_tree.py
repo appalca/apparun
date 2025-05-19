@@ -239,7 +239,7 @@ class ImpactTreeNode(BaseModel):
         # Lambdified model returns a constant if model is a constant itself.
         # Need to convert it to ndarray.
 
-        if len(params)==0:
+        if len(params) == 0:
             return {method_name: result}
 
         if isinstance(list(params.values())[0], np.ndarray) and not isinstance(

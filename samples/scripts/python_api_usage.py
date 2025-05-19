@@ -20,15 +20,19 @@ OUTPUT_FILES_PATH = "outputs/"
 impact_model = ImpactModel.from_yaml("samples/impact_models/nvidia_ai_gpu_chip.yaml")
 
 # Get scores and scores for each node
-scores = impact_model.get_scores(lifespan=3,
-                                 architecture="Maxwell",
-                                 cuda_core=[256, 512, 1024],
-                                 energy_per_inference=[0.05, 0.06, 0.065])
+scores = impact_model.get_scores(
+    lifespan=3,
+    architecture="Maxwell",
+    cuda_core=[256, 512, 1024],
+    energy_per_inference=[0.05, 0.06, 0.065],
+)
 print(scores)
-nodes_scores = impact_model.get_nodes_scores(lifespan=3,
-                                             architecture="Maxwell",
-                                             cuda_core=[256, 512, 1024],
-                                             energy_per_inference=[0.05, 0.06, 0.065])
+nodes_scores = impact_model.get_nodes_scores(
+    lifespan=3,
+    architecture="Maxwell",
+    cuda_core=[256, 512, 1024],
+    energy_per_inference=[0.05, 0.06, 0.065],
+)
 print(nodes_scores)
 
 # Generate Tree Map figures for nodes
@@ -105,6 +109,7 @@ class NewNodesUncertaintyResult(NodesUncertaintyResult):
 
 
 # Let's compute nodes uncertainty again, with custom class.
+
 
 @register_result("uncertainty")
 class UncertaintyResult(ImpactModelResult):
