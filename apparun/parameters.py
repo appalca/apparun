@@ -151,9 +151,9 @@ class FloatParam(ImpactModelParam):
                 )
         elif isinstance(values, list):
             # List of values
-            if any(type(value) is not float for value in values):
+            if any(type(value) not in [float, int] for value in values):
                 raise TypeError(
-                    f"The parameter {self.name} can only take float value or list of float values"
+                    f"The parameter {self.name} can only take float or int value or list of float or int values"
                 )
             elif any(value < self.min or value > self.max for value in values):
                 raise ValueError(
