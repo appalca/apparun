@@ -70,6 +70,14 @@ class ImpactModelParam(BaseModel):
     def corresponds(self, symbol_name: str) -> bool:
         return
 
+    def validate_values(self, values):
+        """
+        Check that values are valid for this parameter.
+        If the values are invalid, an exception is raised.
+        :param values: values of any type
+        """
+        pass
+
 
 class FloatParam(ImpactModelParam):
     """
@@ -131,6 +139,31 @@ class FloatParam(ImpactModelParam):
 
     def corresponds(self, symbol_name: str) -> bool:
         return symbol_name == self.name
+
+    def validate_values(self, values):
+        if isinstance(values, int):
+            values = float(values)
+        if isinstance(values, float):
+            # Single value
+            if values < self.min or values > self.max:
+                raise ValueError(
+                    f"Invalid value {values} for parameter {self.name}, value must be in range [{self.min}, {self.max}]"
+                )
+        elif isinstance(values, list):
+            # List of values
+            if any(type(value) not in [float, int] for value in values):
+                raise TypeError(
+                    f"The parameter {self.name} can only take float or int value or list of float or int values"
+                )
+            elif any(value < self.min or value > self.max for value in values):
+                raise ValueError(
+                    f"Invalid values for parameter {self.name}, values must be in range [{self.min}, {self.max}]"
+                )
+        else:
+            # Not a single float value or a list of values
+            raise TypeError(
+                f"The parameter {self.name} can only take float value or list of float values"
+            )
 
 
 class EnumParam(ImpactModelParam):
@@ -209,6 +242,29 @@ class EnumParam(ImpactModelParam):
 
     def corresponds(self, symbol_name: str) -> bool:
         return symbol_name in self.dummies_names
+
+    def validate_values(self, values):
+        if isinstance(values, str):
+            # Single value
+            if values not in self.options:
+                raise ValueError(
+                    f"Invalid value for parameter {self.name}: Possible options {list(self.options)} but got {values}"
+                )
+        elif isinstance(values, list):
+            # List of values
+            if any(type(value) is not str for value in values):
+                raise TypeError(
+                    f"Invalid value type for parameter {self.name}: Expected str or List[str] but got {type(values)}"
+                )
+            invalid_values = list(filter(lambda val: val not in self.options, values))
+            if len(invalid_values) > 0:
+                raise ValueError(
+                    f"Invalid value for parameter {self.name}: Possible options {list(self.options)} but got {invalid_values}"
+                )
+        else:
+            raise TypeError(
+                f"Invalid value type for parameter {self.name}: Expected str or List[str] but got {type(values)}"
+            )
 
 
 class ImpactModelParams(BaseModel):
