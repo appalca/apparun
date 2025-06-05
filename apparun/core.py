@@ -52,6 +52,7 @@ def compute_impacts(
     impact_model = ImpactModel.from_yaml(
         os.path.join(IMPACTS_MODEL_DIR, f"{impact_model_name}.yaml")
     )
+
     if all_nodes:
         return impact_model.get_nodes_scores(**params)
     return dict(impact_model.get_scores(**params))

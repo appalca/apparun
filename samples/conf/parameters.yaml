@@ -1,5 +1,13 @@
 lifespan: 3
 architecture: Maxwell
-cuda_core: [256, 512, 1024]
-energy_per_inference: [0.05, 0.06, 0.065]
+cuda_core:
+    architecture:
+        Maxwell: 1344
+        Pascal: 1280
+usage_location: [FR, EU, USA]
+inference_per_day: [86400000, 172800000, 259200000]
+energy_per_inference:
+    architecture:
+        Maxwell: 0.0878 * cuda_core
+        Pascal: 0.0679 * cuda_core
 # Rest of parameters will use the default values

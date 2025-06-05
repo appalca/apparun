@@ -13,3 +13,4 @@ kaleido<=0.1.0.post1
 SALib
 hatchling
 click==8.1.8
+networkx==3.4.2

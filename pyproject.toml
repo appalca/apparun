@@ -36,7 +36,8 @@ dependencies = [
     "uvicorn[standard]",
     "kaleido<=0.1.0.post1",
     "SALib",
-    "click<=8.1.8"
+    "click<=8.1.8",
+    "networkx==3.4.2"
 ]
 
 [project.scripts]

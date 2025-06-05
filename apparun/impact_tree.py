@@ -3,25 +3,18 @@ from __future__ import annotations
 import itertools
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Self, Union
 
 import numpy as np
-import sympy
-from pydantic import BaseModel, ValidationError, ValidationInfo, field_validator
+from pydantic import BaseModel, ValidationError, field_validator
 from pydantic_core import PydanticCustomError
 from sympy import Expr, lambdify
 
-from apparun.exceptions import NotAnExpressionError
+from apparun.exceptions import InvalidExpr
+from apparun.expressions import parse_expr
 from apparun.logger import logger
 from apparun.score import LCIAScores
 from apparun.tree_node import NodeProperties
-
-
-def parse_expr(expr: str) -> Expr:
-    pattern = r"^[+\-*/().\s\w]*$"
-    if not re.match(pattern, expr):
-        raise NotAnExpressionError(expr)
-    return sympy.parse_expr(expr)
 
 
 class ImpactTreeNode(BaseModel):
@@ -44,37 +37,25 @@ class ImpactTreeNode(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    @field_validator("models", "direct_impacts", "scaled_direct_impacts", mode="before")
-    @classmethod
-    def validate_exprs(
-        cls, values: Dict[str, str], info: ValidationInfo
-    ) -> Dict[str, Expr]:
-        parsed_values = {}
-        for name, value in values.items():
-            try:
-                parsed_values[name] = parse_expr(value)
-            except NotAnExpressionError:
-                raise PydanticCustomError(
-                    "value_error",
-                    f"Invalid expression for the field {info.field_name} of the tree node {info.data['name']}: {value}",
-                )
-        return parsed_values
-
     @field_validator("amount", mode="before")
     @classmethod
-    def validate_amount(cls, value: Union[float, int, str]) -> Union[float, Expr]:
+    def validate_amount(cls, amount: Union[float, int, str]) -> Union[Expr, float]:
         try:
-            match value:
-                case int():
-                    return float(value)
-                case str():
-                    return parse_expr(value)
-                case _:
-                    return value
-        except NotAnExpressionError:
-            raise PydanticCustomError(
-                "value_error", f"Invalid expression for the field amount: {value}"
-            )
+            if isinstance(amount, (float, int)):
+                return amount
+            return parse_expr(amount).evalf()
+        except InvalidExpr:
+            raise PydanticCustomError("float_expr", "Invalid float expression")
+
+    @field_validator("models", "direct_impacts", "scaled_direct_impacts", mode="before")
+    @classmethod
+    def validate_exprs(cls, exprs: Dict[str, str]) -> Dict[str, Expr]:
+        try:
+            for key, expr in exprs.items():
+                exprs[key] = parse_expr(expr)
+        except InvalidExpr as e:
+            raise PydanticCustomError("invalid_expr", "", {"expr": e.expr})
+        return exprs
 
     @property
     def models_compiled(self):
@@ -199,8 +180,13 @@ class ImpactTreeNode(BaseModel):
             return node
         except ValidationError as e:
             for err in e.errors():
-                logger.error(err["msg"])
-            raise e
+                if err["type"] == "float_expr":
+                    logger.error(
+                        "Invalid expression in the tree node %s: %s",
+                        err["loc"][0],
+                        err["input"],
+                    )
+            raise
 
     @staticmethod
     def node_name_to_symbol_name(node_name: str) -> str:

@@ -1,4 +1,5 @@
 import os
+import traceback
 from typing import Optional
 
 import typer
@@ -36,6 +37,7 @@ def compute(
         logger.info("Parameters values loaded with no error")
 
         scores = apparun.core.compute_impacts(impact_model_name, params)
+        print(scores)
         if output_file_path is not None:
             with open(output_file_path, "w") as stream:
                 yaml.dump(scores, stream, sort_keys=False)
