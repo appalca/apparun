@@ -141,21 +141,20 @@ class FloatParam(ImpactModelParam):
         return symbol_name == self.name
 
     def validate_values(self, values):
-        if isinstance(values, int):
-            values = float(values)
-        if isinstance(values, float):
+        accepted_types = (float, int, np.floating, np.integer)
+        if isinstance(values, accepted_types):
             # Single value
-            if values < self.min or values > self.max:
+            if float(values) < self.min or values > self.max:
                 raise ValueError(
                     f"Invalid value {values} for parameter {self.name}, value must be in range [{self.min}, {self.max}]"
                 )
         elif isinstance(values, list):
             # List of values
-            if any(type(value) not in [float, int] for value in values):
+            if any(not isinstance(value, accepted_types) for value in values):
                 raise TypeError(
                     f"The parameter {self.name} can only take float or int value or list of float or int values"
                 )
-            elif any(value < self.min or value > self.max for value in values):
+            elif any(float(value) < self.min or value > self.max for value in values):
                 raise ValueError(
                     f"Invalid values for parameter {self.name}, values must be in range [{self.min}, {self.max}]"
                 )

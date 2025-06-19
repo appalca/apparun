@@ -4,6 +4,7 @@ This module contains the tests for the validation of the values of the parameter
 
 import os
 
+import numpy as np
 import pytest
 
 from apparun.impact_model import ImpactModel
@@ -124,3 +125,18 @@ def test_enum_not_an_option():
         )
     except ValueError:
         pass
+
+
+def test_float_valid():
+    """
+    Check no exception is raised when given valid values for a float type parameter.
+    """
+    impact_model = ImpactModel.from_yaml(impact_model_path)
+
+    # Test with a single value
+    params = {"lifespan": [1.2, 2, np.float16(2.4), np.int32(3)]}
+
+    try:
+        impact_model.validate_parameters_values(params)
+    except Exception:
+        pytest.fail("No exception should be raised for valid values")
