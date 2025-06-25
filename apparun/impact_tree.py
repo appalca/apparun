@@ -6,11 +6,22 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Optional, Union
 
 import numpy as np
-from pydantic import BaseModel
-from sympy import Expr, lambdify, parse_expr
+import sympy
+from pydantic import BaseModel, ValidationError, ValidationInfo, field_validator
+from pydantic_core import PydanticCustomError
+from sympy import Expr, lambdify
 
+from apparun.exceptions import NotAnExpressionError
+from apparun.logger import logger
 from apparun.score import LCIAScores
 from apparun.tree_node import NodeProperties
+
+
+def parse_expr(expr: str) -> Expr:
+    pattern = r"^[+\-*/().\s\w]*$"
+    if not re.match(pattern, expr):
+        raise NotAnExpressionError(expr)
+    return sympy.parse_expr(expr)
 
 
 class ImpactTreeNode(BaseModel):
@@ -32,6 +43,32 @@ class ImpactTreeNode(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+    @field_validator("models", "direct_impacts", "scaled_direct_impacts", mode="before")
+    @classmethod
+    def validate_exprs(
+        cls, values: Dict[str, str], info: ValidationInfo
+    ) -> Dict[str, Expr]:
+        parsed_values = {}
+        for name, value in values.items():
+            try:
+                parsed_values[name] = parse_expr(value)
+            except NotAnExpressionError:
+                raise PydanticCustomError(
+                    "value_error",
+                    f"Invalid expression for the field {info.field_name} of the tree node {info.data['name']}: {value}",
+                )
+        return parsed_values
+
+    @field_validator("amount", mode="before")
+    @classmethod
+    def validate_amount(cls, value: str) -> Expr:
+        try:
+            return parse_expr(value)
+        except NotAnExpressionError:
+            raise PydanticCustomError(
+                "value_error", f"Invalid expression for the field amount: {value}"
+            )
 
     @property
     def models_compiled(self):
@@ -140,28 +177,24 @@ class ImpactTreeNode(BaseModel):
         node.
         :return: constructed node
         """
-        node = ImpactTreeNode(
-            name=impact_model_tree_node["name"],
-            models={
-                method: parse_expr(expr)
-                for method, expr in impact_model_tree_node["models"].items()
-            },
-            direct_impacts={
-                method: parse_expr(expr)
-                for method, expr in impact_model_tree_node["direct_impacts"].items()
-            },
-            scaled_direct_impacts={
-                method: parse_expr(expr)
-                for method, expr in impact_model_tree_node[
-                    "scaled_direct_impacts"
-                ].items()
-            },
-            properties=NodeProperties.from_dict(impact_model_tree_node["properties"]),
-            amount=parse_expr(impact_model_tree_node["amount"]),
-        )
-        for child in impact_model_tree_node["children"]:
-            node.new_child_from_dict(child)
-        return node
+        try:
+            node = ImpactTreeNode(
+                name=impact_model_tree_node["name"],
+                models=impact_model_tree_node["models"],
+                direct_impacts=impact_model_tree_node["direct_impacts"],
+                scaled_direct_impacts=impact_model_tree_node["scaled_direct_impacts"],
+                properties=NodeProperties.from_dict(
+                    impact_model_tree_node["properties"]
+                ),
+                amount=impact_model_tree_node["amount"],
+            )
+            for child in impact_model_tree_node["children"]:
+                node.new_child_from_dict(child)
+            return node
+        except ValidationError as e:
+            for err in e.errors():
+                logger.error(err["msg"])
+            raise e
 
     @staticmethod
     def node_name_to_symbol_name(node_name: str) -> str:
