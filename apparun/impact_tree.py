@@ -18,7 +18,7 @@ from apparun.tree_node import NodeProperties
 
 
 def parse_expr(expr: str) -> Expr:
-    pattern = r"^[0-9+\-*/().\s\w]*$"
+    pattern = r"^[+\-*/().\s\w]*$"
     if not re.match(pattern, expr):
         raise NotAnExpressionError(expr)
     return sympy.parse_expr(expr)
