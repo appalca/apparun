@@ -188,6 +188,28 @@ class EnumParam(ImpactModelParam):
     def options(self):
         return self.weights.keys()
 
+    def update_default(self, new_value: str, weights_to_default: bool = False):
+        """
+        Change default value of the parameter, and optionally update the weights to match
+        the new value only (which can be useful for uncertainty analysis).
+        :param new_value: new default value
+        :param weights_to_default: if True, the weights will be assigned to the new value
+        only.
+        """
+        super().update_default(new_value)
+        if weights_to_default:
+            self.update_weights(
+                {key: 1 if key == new_value else 0 for key in self.weights.keys()}
+            )
+
+    def update_weights(self, new_weights: dict[str, float]):
+        """
+        Change the weights of the parameter.
+        :param new_weights: new weights. Keys are enum options, values are corresponding
+        probability of occurrence.
+        """
+        self.weights = new_weights
+
     def full_option_name(self, option: str) -> str:
         """
         Return option with parameter name as a prefix.
@@ -286,16 +308,25 @@ class ImpactModelParams(BaseModel):
             return [self.get_parameter_by_name(name).to_dict() for name in sorted_names]
         return [param.to_dict() for param in self.parameters]
 
-    def update_defaults(self, defaults: Dict[str, Union[str, float]]):
+    def update_defaults(
+        self, defaults: Dict[str, Union[str, float]], weights_to_default: bool = False
+    ):
         """
         Change default value of the parameters contained in argument, and compute new
         bounds if relevant.
         :param defaults: dict containing parameter name as key and new default as
         value
+        :param weights_to_default: if True, the weights of the enum parameters will be
+        assigned to the new value only.
         """
         for parameter in self.parameters:
             if parameter.name in defaults.keys():
-                parameter.update_default(defaults[parameter.name])
+                if isinstance(parameter, EnumParam):
+                    parameter.update_default(
+                        defaults[parameter.name], weights_to_default
+                    )
+                if isinstance(parameter, FloatParam):
+                    parameter.update_default(defaults[parameter.name])
 
     def get_parameter_by_name(self, parameter_name: str) -> Optional[ImpactModelParam]:
         matching_param = [
