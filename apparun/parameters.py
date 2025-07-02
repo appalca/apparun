@@ -321,12 +321,17 @@ class ImpactModelParams(BaseModel):
         """
         for parameter in self.parameters:
             if parameter.name in defaults.keys():
-                if isinstance(parameter, EnumParam):
-                    parameter.update_default(
-                        defaults[parameter.name], weights_to_default
-                    )
-                if isinstance(parameter, FloatParam):
-                    parameter.update_default(defaults[parameter.name])
+                match parameter.type:
+                    case "enum":
+                        parameter.update_default(
+                            defaults[parameter.name], weights_to_default
+                        )
+                    case "float":
+                        parameter.update_default(defaults[parameter.name])
+                    case _:
+                        raise ValueError(
+                            f"Unknown ImpactModelParam type: {parameter.type}."
+                        )
 
     def get_parameter_by_name(self, parameter_name: str) -> Optional[ImpactModelParam]:
         matching_param = [

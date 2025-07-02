@@ -12,3 +12,4 @@ repos:
     rev: 6.1.0
     hooks:
     - id: flake8
+      language_version: "3.11"
