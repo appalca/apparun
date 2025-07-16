@@ -6,7 +6,7 @@ import yaml
 from yaml import YAMLError
 
 import apparun.core
-from apparun.logger import logger
+from apparun.logger import init_logger, logger
 
 cli_app = typer.Typer()
 
@@ -105,4 +105,5 @@ def results(results_config_file_path: str):
 
 
 if __name__ == "__main__":
+    init_logger()
     cli_app()
