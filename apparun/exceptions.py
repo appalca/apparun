@@ -1,9 +1,10 @@
-class NotAnExpressionError(Exception):
+class InvalidExpr(Exception):
     """
-    Raised when a value of an element of an impact model is
-    not an expression.
+    Exception raised when an expression is invalid.
     """
 
-    def __init__(self, expr):
-        super().__init__(f"Invalid expression: {expr}")
+    def __init__(self, type: str, expr: str, ctx=None):
+        super().__init__()
+        self.type = type
         self.expr = expr
+        self.ctx = ctx or {}

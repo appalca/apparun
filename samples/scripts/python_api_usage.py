@@ -1,10 +1,13 @@
 import os
+import sys
 
 import pandas as pd
 import plotly.express as px
 import plotly.io as pio
+from pydantic import ValidationError
 
 from apparun.impact_model import ImpactModel
+from apparun.logger import log_exprs_error
 from apparun.results import (
     ImpactModelResult,
     NodesUncertaintyResult,
@@ -20,20 +23,24 @@ OUTPUT_FILES_PATH = "outputs/"
 impact_model = ImpactModel.from_yaml("samples/impact_models/nvidia_ai_gpu_chip.yaml")
 
 # Get scores and scores for each node
-scores = impact_model.get_scores(
-    lifespan=3,
-    architecture="Maxwell",
-    cuda_core=[256, 512, 1024],
-    energy_per_inference=[0.05, 0.06, 0.065],
-)
-print(scores)
-nodes_scores = impact_model.get_nodes_scores(
-    lifespan=3,
-    architecture="Maxwell",
-    cuda_core=[256, 512, 1024],
-    energy_per_inference=[0.05, 0.06, 0.065],
-)
-print(nodes_scores)
+try:
+    scores = impact_model.get_scores(
+        lifespan=3,
+        architecture="Maxwell",
+        cuda_core=[500, 512, 524],
+        energy_per_inference=[0.05, 0.06, 0.065],
+    )
+    print(scores)
+    nodes_scores = impact_model.get_nodes_scores(
+        lifespan=3,
+        architecture="Maxwell",
+        cuda_core=[468, 512, 550],
+        energy_per_inference=[0.05, 0.06, 0.065],
+    )
+    print(nodes_scores)
+except ValidationError as e:
+    log_exprs_error(e)
+    sys.exit(1)
 
 # Generate Tree Map figures for nodes
 # We can update default values
