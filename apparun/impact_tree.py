@@ -62,9 +62,15 @@ class ImpactTreeNode(BaseModel):
 
     @field_validator("amount", mode="before")
     @classmethod
-    def validate_amount(cls, value: str) -> Expr:
+    def validate_amount(cls, value: Union[float, int, str]) -> Union[float, Expr]:
         try:
-            return parse_expr(value)
+            match value:
+                case int():
+                    return float(value)
+                case str():
+                    return parse_expr(value)
+                case _:
+                    return value
         except NotAnExpressionError:
             raise PydanticCustomError(
                 "value_error", f"Invalid expression for the field amount: {value}"
