@@ -4,7 +4,7 @@ cuda_core:
     architecture:
         Maxwell: 1344
         Pascal: 1280
-usage_location: [FR, EU, USA]
+usage_location: [FR, EU, EU]
 inference_per_day: [86400000, 172800000, 259200000]
 energy_per_inference:
     architecture:
