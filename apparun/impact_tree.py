@@ -41,9 +41,9 @@ class ImpactTreeNode(BaseModel):
     @classmethod
     def validate_amount(cls, amount: Union[float, int, str]) -> Union[Expr, float]:
         try:
-            if isinstance(amount, (float, int)):
+            if isinstance(amount, (float, int, Expr)):
                 return amount
-            return parse_expr(amount).evalf()
+            return parse_expr(amount)
         except InvalidExpr:
             raise PydanticCustomError("float_expr", "Invalid float expression")
 
