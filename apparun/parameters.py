@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import re
+from collections import defaultdict
 from typing import Dict, List, Optional, Union
 
+import networkx as nx
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+from pydantic_core import PydanticCustomError
 from SALib.sample import sobol
+
+from apparun.expressions import ParamsValuesSet
+from apparun.logger import logger
 
 
 class ImpactModelParam(BaseModel):
@@ -15,7 +21,7 @@ class ImpactModelParam(BaseModel):
     """
 
     name: str
-    default: Union[str, float]
+    default: Optional[Union[str, float]] = None
 
     def to_dict(self) -> dict:
         """
@@ -41,7 +47,6 @@ class ImpactModelParam(BaseModel):
         Convert dict to ImpactModelParam object. Subclass must be specified in 'type'
         field.
         :param impact_model_param: dict containing construction parameters of the param.
-        :param frozen: should base model be frozen? Allows it to be hashable.
         :return: constructed param
         """
         if impact_model_param["type"] == "float":
@@ -69,14 +74,6 @@ class ImpactModelParam(BaseModel):
 
     def corresponds(self, symbol_name: str) -> bool:
         return
-
-    def validate_values(self, values):
-        """
-        Check that values are valid for this parameter.
-        If the values are invalid, an exception is raised.
-        :param values: values of any type
-        """
-        pass
 
 
 class FloatParam(ImpactModelParam):
@@ -112,12 +109,13 @@ class FloatParam(ImpactModelParam):
         Compute min and max attributes from default attribute if pm, or pm_perc attributes
         is not None.
         """
-        if self.pm is not None:
-            self.min = self.default - self.pm
-            self.max = self.default + self.pm
-        if self.pm_perc is not None:
-            self.min = self.default - (self.default * self.pm_perc)
-            self.max = self.default + (self.default * self.pm_perc)
+        if self.default is not None:
+            if self.pm is not None:
+                self.min = self.default - self.pm
+                self.max = self.default + self.pm
+            if self.pm_perc is not None:
+                self.min = self.default - (self.default * self.pm_perc)
+                self.max = self.default + (self.default * self.pm_perc)
 
     def transform(
         self, values: Union[float, List[float]]
@@ -139,30 +137,6 @@ class FloatParam(ImpactModelParam):
 
     def corresponds(self, symbol_name: str) -> bool:
         return symbol_name == self.name
-
-    def validate_values(self, values):
-        accepted_types = (float, int, np.floating, np.integer)
-        if isinstance(values, accepted_types):
-            # Single value
-            if float(values) < self.min or values > self.max:
-                raise ValueError(
-                    f"Invalid value {values} for parameter {self.name}, value must be in range [{self.min}, {self.max}]"
-                )
-        elif isinstance(values, list):
-            # List of values
-            if any(not isinstance(value, accepted_types) for value in values):
-                raise TypeError(
-                    f"The parameter {self.name} can only take float or int value or list of float or int values"
-                )
-            elif any(float(value) < self.min or value > self.max for value in values):
-                raise ValueError(
-                    f"Invalid values for parameter {self.name}, values must be in range [{self.min}, {self.max}]"
-                )
-        else:
-            # Not a single float value or a list of values
-            raise TypeError(
-                f"The parameter {self.name} can only take float value or list of float values"
-            )
 
 
 class EnumParam(ImpactModelParam):
@@ -264,29 +238,6 @@ class EnumParam(ImpactModelParam):
     def corresponds(self, symbol_name: str) -> bool:
         return symbol_name in self.dummies_names
 
-    def validate_values(self, values):
-        if isinstance(values, str):
-            # Single value
-            if values not in self.options:
-                raise ValueError(
-                    f"Invalid value for parameter {self.name}: Possible options {list(self.options)} but got {values}"
-                )
-        elif isinstance(values, list):
-            # List of values
-            if any(type(value) is not str for value in values):
-                raise TypeError(
-                    f"Invalid value type for parameter {self.name}: Expected str or List[str] but got {type(values)}"
-                )
-            invalid_values = list(filter(lambda val: val not in self.options, values))
-            if len(invalid_values) > 0:
-                raise ValueError(
-                    f"Invalid value for parameter {self.name}: Possible options {list(self.options)} but got {invalid_values}"
-                )
-        else:
-            raise TypeError(
-                f"Invalid value type for parameter {self.name}: Expected str or List[str] but got {type(values)}"
-            )
-
 
 class ImpactModelParams(BaseModel):
     parameters: List[ImpactModelParam]
@@ -298,7 +249,7 @@ class ImpactModelParams(BaseModel):
 
     def to_list(self, sorted_by_name: Optional[bool] = False) -> List[Dict]:
         """
-        Convert each parameter of parameters attribute to a dict, return them as a list,
+        Convert each parameter of parameters attributes to a dict, return them as a list,
         optionally sorted by parameter's name
         :param sorted_by_name: sort parameters list by parameter's name if True
         :return: list of parameter, themselves as dict
@@ -404,8 +355,11 @@ class ImpactModelParams(BaseModel):
         self.__curr += 1
         return param
 
-    def __getitem__(self, i) -> ImpactModelParam:
-        return self.parameters[i]
+    def __getitem__(self, key: int | str) -> ImpactModelParam:
+        if isinstance(key, int):
+            return self.parameters[key]
+        else:
+            return self.get_parameter_by_name(key)
 
     def set_sobol_problem(self):
         self.sobol_problem = {
@@ -429,3 +383,177 @@ class ImpactModelParams(BaseModel):
             self.parameters[i].name: self.parameters[i].draw_to_distrib(samples[:, i])
             for i in range(len(self.parameters))
         }
+
+
+class ImpactModelParamsValues(BaseModel):
+    """
+    A set of values for the parameters of an impact model.
+
+    ATTENTION!! Use the method from dict to build instance of this class.
+    """
+
+    values: Dict[str, List[Union[float, int, str]]]
+
+    def __getitem__(self, item):
+        if item in self.values.keys():
+            return self.values[item]
+        else:
+            raise KeyError()
+
+    @classmethod
+    def from_dict(
+        cls,
+        parameters: ImpactModelParams,
+        values: Dict[
+            str, Union[float, int, str, dict, List[Union[float, int, str, dict]]]
+        ],
+    ) -> ImpactModelParamsValues:
+        # Values with the default values for the parameters not in the values
+        all_values = {
+            **values,
+            **{
+                param.name: param.default
+                for param in parameters
+                if param.name not in values
+            },
+        }
+        # Step 1 - Transform all values into lists
+        empty_list_values = [
+            name
+            for name, value in values.items()
+            if isinstance(value, list) and len(value) == 0
+        ]
+        if empty_list_values:
+            raise ValidationError.from_exception_data(
+                "",
+                line_errors=[
+                    {
+                        "loc": ("values",),
+                        "msg": "",
+                        "type": PydanticCustomError(
+                            "empty_list",
+                            "The value for the parameter {parameter} can't be an empty list",
+                            {"parameter": name},
+                        ),
+                    }
+                    for name in empty_list_values
+                ],
+            )
+
+        list_values = [value for value in values.values() if isinstance(value, list)]
+        if any(
+            len(list_values[0]) != len(list_values[i])
+            for i in range(1, len(list_values))
+        ):
+            raise ValidationError.from_exception_data(
+                "",
+                line_errors=[
+                    {
+                        "loc": ("values",),
+                        "msg": "",
+                        "type": PydanticCustomError(
+                            "lists_size_match", "List values must have matching sizes"
+                        ),
+                    }
+                ],
+            )
+
+        size = max(map(len, list_values)) if list_values else 1
+        list_values = {
+            name: value if isinstance(value, list) else [value] * size
+            for name, value in all_values.items()
+        }
+
+        # Step 2 - Transform the values to expressions
+        exprs_sets = []
+        for idx in range(size):
+            exprs_sets.append(
+                ParamsValuesSet.build(
+                    {name: value[idx] for name, value in list_values.items()},
+                    parameters,
+                )
+            )
+
+        # Step 3 - Dependencies cycles detection
+        for exprs_set in exprs_sets:
+            try:
+                cycle = exprs_set.dependencies_cycle()
+                if cycle:
+                    raise ValidationError.from_exception_data(
+                        "",
+                        line_errors=[
+                            {
+                                "loc": ("values",),
+                                "msg": "",
+                                "type": PydanticCustomError(
+                                    "dependencies_cycle",
+                                    "The expressions for the parameters {parameters} are inter-dependent",
+                                    {"parameters": tuple(sorted(cycle))},
+                                ),
+                            }
+                        ],
+                    )
+            except nx.NetworkXNoCycle:
+                pass
+
+        # Step 4 - Expressions' evaluation
+        final_values = defaultdict(list)
+        for exprs_set in exprs_sets:
+            evals = exprs_set.evaluate()
+            for name, value in evals.items():
+                final_values[name].append(value)
+
+        # Step 5 - Validation of the final values
+        errors = []
+        for name, value in final_values.items():
+            for idx, elem in enumerate(value):
+                parameter = parameters[name]
+                match parameter.type:
+                    case "float" if elem < parameter.min or elem > parameter.max:
+                        if exprs_sets[idx][name].is_complex:
+                            logger.warning(
+                                "The value %s (got after evaluating the expression %s) for the parameter %s is outside its [min, max] range",
+                                str(elem),
+                                name,
+                                str(exprs_sets[idx][name].raw_version),
+                            )
+                        else:
+                            logger.warning(
+                                "The value %s for the parameter %s is outside its [min, max] range",
+                                str(elem),
+                                name,
+                            )
+                    case "enum" if elem not in parameter.options:
+                        if exprs_sets[idx][name].is_complex:
+                            errors.append(
+                                {
+                                    "type": PydanticCustomError(
+                                        "value_error",
+                                        "Invalid value {value}, got after evaluating the expression {expr}, for the parameter {target_parameter}",
+                                        {
+                                            "value": elem,
+                                            "target_parameter": name,
+                                            "expr": str(
+                                                exprs_sets[idx][name].raw_version
+                                            ),
+                                        },
+                                    )
+                                }
+                            )
+                        else:
+                            errors.append(
+                                {
+                                    "type": PydanticCustomError(
+                                        "value_error",
+                                        "Invalid value {value} for the parameter {target_parameter}",
+                                        {"value": elem, "target_parameter": name},
+                                    )
+                                }
+                            )
+        if errors:
+            raise ValidationError.from_exception_data("", line_errors=errors)
+
+        return ImpactModelParamsValues(**{"values": final_values})
+
+    def items(self):
+        return self.values.items()

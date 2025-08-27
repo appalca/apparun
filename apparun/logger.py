@@ -1,6 +1,8 @@
 import logging
 import sys
 
+from pydantic_core import ValidationError
+
 logger = logging.getLogger(__name__)
 
 
@@ -12,7 +14,7 @@ def init_logger():
     """
     logger.setLevel(level=logging.DEBUG)
 
-    # Format the message in the logss
+    # Format the message in the logs
     formatter = logging.Formatter(
         "{asctime} - {levelname} - {message}",
         style="{",

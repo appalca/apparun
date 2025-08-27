@@ -2,8 +2,6 @@
 This module contain the tests to check that the option --help of the commands works.
 """
 
-import subprocess
-
 from typer.testing import CliRunner
 
 from apparun.cli.main import cli_app

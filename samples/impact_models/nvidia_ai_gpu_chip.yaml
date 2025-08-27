@@ -25,24 +25,24 @@ parameters:
 - name: cuda_core
   default: 512.0
   type: float
-  min: 460.8
-  max: 563.2
-  distrib: linear
-  pm: null
-  pm_perc: 0.1
-- name: energy_per_inference
-  default: 0.05
-  type: float
-  min: 0.01
-  max: 0.1
+  min: 256.0
+  max: 4096.0
   distrib: linear
   pm: null
   pm_perc: null
-- name: inference_per_day
-  default: 5184000.0
+- name: energy_per_inference
+  default: 110.0
   type: float
-  min: 5184000.0
-  max: 5184000.0
+  min: 88.0
+  max: 132.0
+  distrib: linear
+  pm: null
+  pm_perc: 0.2
+- name: inference_per_day
+  default: 86400000.0
+  type: float
+  min: 86400000.0
+  max: 86400000.0
   distrib: linear
   pm: null
   pm_perc: 0.0
