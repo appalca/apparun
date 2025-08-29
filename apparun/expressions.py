@@ -47,55 +47,89 @@ def validate_expr(expr: str) -> bool:
     :returns: True if the expression is a valid arithmetic expression, else False.
     """
     tokens_patterns = {
-        "FUN_ID": r"\w+\b(?=\()",
         "ID": r"[a-zA-Z_]+",
         "NUMBER": r"\-?\d+(\.\d+(e\-?\d+)?)?",
         "L_PAREN": r"\(",
         "R_PAREN": r"\)",
-        "OP": r"\+|\-|\*{1,2}|/{1,2}|%",
+        "NEG": r"\-",
+        "OP": r"\+|\*{1,2}|/{1,2}|%",
         "COMMA": r",",
         "WS": r"\s+",
     }
 
     tokens_predecessors = {
-        "ID": ["OP", "L_PAREN", "COMMA"],
-        "FUN_ID": ["OP", "L_PAREN", "COMMA"],
-        "NUMBER": ["OP", "L_PAREN", "COMMA"],
-        "L_PAREN": ["OP", "ID", "L_PAREN", "COMMA", "FUN_ID"],
+        "ID": ["OP", "NEG", "L_PAREN", "COMMA"],
+        "NUMBER": ["OP", "NEG", "L_PAREN", "COMMA"],
+        "L_PAREN": ["OP", "NEG", "ID", "L_PAREN", "COMMA"],
         "R_PAREN": ["NUMBER", "ID", "R_PAREN"],
         "COMMA": ["NUMBER", "ID", "R_PAREN"],
         "OP": ["NUMBER", "ID", "R_PAREN"],
+        "NEG": ["NUMBER", "ID", "L_PAREN", "R_PAREN"],
     }
 
     expr_copy = str(expr)
-    valid = True
-    previous_token = None
-    nb_paren = 0
-    while valid and len(expr_copy) > 0:
-        for token, pattern in tokens_patterns.items():
+    tokens = []
+    ids = []
+    while len(expr_copy) > 0:
+        longest_match = None
+        matched_type = None
+        for type, pattern in tokens_patterns.items():
             match = re.match(pattern, expr_copy)
             if bool(match):
-                expr_copy = expr_copy[match.span()[1] :]
-                if token == "WS":
-                    break
-                elif token == "L_PAREN":
-                    nb_paren += 1
-                elif token == "R_PAREN":
-                    nb_paren -= 1
-                if (
-                    previous_token is not None
-                    and previous_token not in tokens_predecessors[token]
-                ):
-                    valid = False
-                else:
-                    previous_token = token
-                break
-        else:
-            valid = False
+                if longest_match is None or match.span()[1] > longest_match.span()[1]:
+                    longest_match = match
+                    matched_type = type
 
-    fun_names = re.findall(tokens_patterns["FUN_ID"], expr)
-    allowed_funcs = dir(math) + dir(numpy)
-    return valid and nb_paren == 0 and all(fun in allowed_funcs for fun in fun_names)
+        if longest_match is not None:
+            tokens.append(matched_type)
+            if matched_type == "ID":
+                span = longest_match.span()
+                ids.append(expr_copy[span[0] : span[1]])
+            expr_copy = expr_copy[longest_match.span()[1] :]
+        else:
+            break
+
+    if len(expr_copy) > 0:
+        # The expression has not been fully tokenized
+        return False
+
+    tokens = list(filter(lambda t: t != "WS", tokens))
+    if any(
+        [
+            tokens[idx - 1] not in tokens_predecessors[token]
+            for idx, token in enumerate(tokens[1:], 1)
+        ]
+    ):
+        # At least one token has not a valid predecessor
+        return False
+
+    # Verification that the expression is correctly parenthesized
+    nb_paren = 0
+    valid = False
+    for idx, token in enumerate(tokens):
+        match token:
+            case "L_PAREN":
+                nb_paren += 1
+            case "R_PAREN":
+                if nb_paren <= 0:
+                    break
+                else:
+                    nb_paren -= 1
+    else:
+        valid = nb_paren == 0
+
+    if valid:
+        # Check all functions names are allowed functions
+        allowed_funcs = dir(math) + dir(numpy)
+        i = 0
+        for idx in [idx for idx, token in enumerate(tokens[:-1]) if token == "ID"]:
+            if tokens[idx + 1] == "L_PAREN" and ids[i] not in allowed_funcs:
+                valid = False
+                break
+            else:
+                i += 1
+
+    return valid
 
 
 class ParamsValuesSet(BaseModel):

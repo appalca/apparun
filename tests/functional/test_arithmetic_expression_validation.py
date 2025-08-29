@@ -33,6 +33,26 @@ def test_valid_exprs():
       + 21.707425626610416) - 101.14318001667067*sqrt(2)/sqrt(0.0060737847877931227*cuda_core
       + 1))) + 0.00036525*energy_per_inference*inference_per_day*lifespan*(0.005*usage_location_EU
       + 0.021*usage_location_FR)""",
+        """52.92861728*area**2*defect_density**2*hybrid_bondings/((1
+          - exp(-area*defect_density))**2*(70685.775/area - 471.2385*sqrt(2)/sqrt(area)))
+          + 1.0*area**2*defect_density**2*three_layers*(1.0*manuf_location_CN*(6764.15753267247/third_layer_node**0.317
+          + 42.7549978665) + 1.0*manuf_location_EU*(4095.33859766376/third_layer_node**0.317
+          + 59.653139238) + 1.0*manuf_location_FR*(2915.31920449572/third_layer_node**0.317
+          + 54.558108576) + 1.0*manuf_location_TW*(6051.14022423897/third_layer_node**0.317
+          + 43.2809000325))/((1 - exp(-area*defect_density))**2*(70685.775/area -
+          471.2385*sqrt(2)/sqrt(area))) + 123.64492672*area**2*defect_density**2*tsvs/((1
+          - exp(-area*defect_density))**2*(70685.775/area - 471.2385*sqrt(2)/sqrt(area)))
+          + 1.0*area**2*defect_density**2*(1.0*manuf_location_CN*(6764.15753267247/first_layer_node**0.317
+          + 42.7549978665) + 1.0*manuf_location_EU*(4095.33859766376/first_layer_node**0.317
+          + 59.653139238) + 1.0*manuf_location_FR*(2915.31920449572/first_layer_node**0.317
+          + 54.558108576) + 1.0*manuf_location_TW*(6051.14022423897/first_layer_node**0.317
+          + 43.2809000325))/((1 - exp(-area*defect_density))**2*(70685.775/area -
+          471.2385*sqrt(2)/sqrt(area))) + 1.0*area**2*defect_density**2*(1.0*manuf_location_CN*(6764.15753267247/second_layer_node**0.317
+          + 42.7549978665) + 1.0*manuf_location_EU*(4095.33859766376/second_layer_node**0.317
+          + 59.653139238) + 1.0*manuf_location_FR*(2915.31920449572/second_layer_node**0.317
+          + 54.558108576) + 1.0*manuf_location_TW*(6051.14022423897/second_layer_node**0.317
+          + 43.2809000325))/((1 - exp(-area*defect_density))**2*(70685.775/area -
+          471.2385*sqrt(2)/sqrt(area)))""",
     ]
 
     for expr in exprs:
