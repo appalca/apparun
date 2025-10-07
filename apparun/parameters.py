@@ -10,6 +10,7 @@ import pandas as pd
 from pydantic import BaseModel, ValidationError
 from pydantic_core import PydanticCustomError
 from SALib.sample import sobol
+from sympy import Expr
 
 from apparun.expressions import ParamsValuesSet
 from apparun.logger import logger
@@ -20,8 +21,11 @@ class ImpactModelParam(BaseModel):
     Impact model parameter.
     """
 
+    class Config:
+        arbitrary_types_allowed = True
+
     name: str
-    default: Optional[Union[str, float]] = None
+    default: Optional[Union[str, float, Expr, dict]] = None
 
     def to_dict(self) -> dict:
         """
@@ -93,7 +97,6 @@ class FloatParam(ImpactModelParam):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.update_bounds()
 
     def update_default(self, new_value: float):
         """
