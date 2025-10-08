@@ -10,6 +10,7 @@ import pandas as pd
 from pydantic import BaseModel, ValidationError
 from pydantic_core import PydanticCustomError
 from SALib.sample import sobol
+from sympy import Expr
 
 from apparun.expressions import ParamsValuesSet
 from apparun.logger import logger
@@ -20,8 +21,11 @@ class ImpactModelParam(BaseModel):
     Impact model parameter.
     """
 
+    class Config:
+        arbitrary_types_allowed = True
+
     name: str
-    default: Optional[Union[str, float]] = None
+    default: Optional[Union[str, float, Expr, dict]] = None
 
     def to_dict(self) -> dict:
         """
@@ -93,7 +97,6 @@ class FloatParam(ImpactModelParam):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.update_bounds()
 
     def update_default(self, new_value: float):
         """
@@ -509,20 +512,26 @@ class ImpactModelParamsValues(BaseModel):
             for idx, elem in enumerate(value):
                 parameter = parameters[name]
                 match parameter.type:
-                    case "float" if elem < parameter.min or elem > parameter.max:
-                        if exprs_sets[idx][name].is_complex:
+                    case "float":
+                        if parameter.min is None or parameter.max is None:
                             logger.warning(
-                                "The value %s (got after evaluating the expression %s) for the parameter %s is outside its [min, max] range",
-                                str(elem),
-                                name,
-                                str(exprs_sets[idx][name].raw_version),
+                                f"Parameter {parameter.name} does not have valid bounds. "
+                                f"Consider calling update_bounds()."
                             )
-                        else:
-                            logger.warning(
-                                "The value %s for the parameter %s is outside its [min, max] range",
-                                str(elem),
-                                name,
-                            )
+                        elif elem < parameter.min or elem > parameter.max:
+                            if exprs_sets[idx][name].is_complex:
+                                logger.warning(
+                                    "The value %s (got after evaluating the expression %s) for the parameter %s is outside its [min, max] range",
+                                    str(elem),
+                                    name,
+                                    str(exprs_sets[idx][name].raw_version),
+                                )
+                            else:
+                                logger.warning(
+                                    "The value %s for the parameter %s is outside its [min, max] range",
+                                    str(elem),
+                                    name,
+                                )
                     case "enum" if elem not in parameter.options:
                         if exprs_sets[idx][name].is_complex:
                             errors.append(
