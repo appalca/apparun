@@ -39,7 +39,9 @@ class ImpactTreeNode(BaseModel):
 
     @field_validator("amount", mode="before")
     @classmethod
-    def validate_amount(cls, amount: Union[float, int, str]) -> Union[Expr, float]:
+    def validate_amount(
+        cls, amount: Union[float, int, str, Expr]
+    ) -> Union[Expr, float]:
         try:
             if isinstance(amount, (float, int, Expr)):
                 return amount
