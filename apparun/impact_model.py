@@ -134,8 +134,6 @@ class ImpactModel(BaseModel):
         :param compile_models: if True, all models in tree nodes will be compiled.
         ImpactModel will be bigger, but its execution will be faster at first use.
         """
-        if compile_models:
-            self.tree.compile_models()
         with open(filepath, "w") as stream:
             yaml.dump(self.to_dict(), stream, sort_keys=False)
 
