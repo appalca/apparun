@@ -170,7 +170,7 @@ class ImpactTreeNode(BaseModel):
         self,
         transformed_params: Dict[
             str, Union[List[Union[str, float]], Union[str, float]]
-        ]
+        ],
     ) -> LCIAScores:
         """
         Compute node's impacts with given parameters values.

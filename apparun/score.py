@@ -35,8 +35,12 @@ class LCIAScores(BaseModel):
         scores = {
             method_name: self.scores[method_name] + other.scores[method_name]
             if isinstance(self.scores[method_name], float)
-            else [self.scores[method_name][i] + other.scores[method_name][i] if method_name in other.scores else
-                  self.scores[method_name][i] for i in range(len(self.scores[method_name]))]
+            else [
+                self.scores[method_name][i] + other.scores[method_name][i]
+                if method_name in other.scores
+                else self.scores[method_name][i]
+                for i in range(len(self.scores[method_name]))
+            ]
             for method_name in self.scores.keys()
         }
         return LCIAScores(scores=scores)
@@ -45,12 +49,15 @@ class LCIAScores(BaseModel):
         scores = {
             method_name: self.scores[method_name] - other.scores[method_name]
             if isinstance(self.scores[method_name], float)
-            else [self.scores[method_name][i] - other.scores[method_name][i] if method_name in other.scores else
-                  self.scores[method_name][i] for i in range(len(self.scores[method_name]))]
+            else [
+                self.scores[method_name][i] - other.scores[method_name][i]
+                if method_name in other.scores
+                else self.scores[method_name][i]
+                for i in range(len(self.scores[method_name]))
+            ]
             for method_name in self.scores.keys()
         }
         return LCIAScores(scores=scores)
-
 
     @staticmethod
     def sum(lcia_scores: List[LCIAScores]) -> LCIAScores:

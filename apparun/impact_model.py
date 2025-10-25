@@ -214,9 +214,9 @@ class ImpactModel(BaseModel):
 
     def get_nodes_scores(
         self,
-            by_property: Optional[str] = None,
-            direct_impacts: Optional[bool] = False,
-            **params
+        by_property: Optional[str] = None,
+        direct_impacts: Optional[bool] = False,
+        **params,
     ) -> List[NodeScores]:
         """
         Get impact scores of the each node for each impact method, according to the

@@ -99,12 +99,19 @@ class NodeScores(BaseModel):
         direct_impact_scores = []
         for node_score in node_scores:
             to_substract = LCIAScores.sum(
-                [nd_sc.lcia_scores for nd_sc in node_scores if nd_sc.parent == node_score.name])
+                [
+                    nd_sc.lcia_scores
+                    for nd_sc in node_scores
+                    if nd_sc.parent == node_score.name
+                ]
+            )
             direct_lcia_scores = node_score.lcia_scores - to_substract
-            direct_impact_score = NodeScores(name=node_score.name,
-                                             parent=node_score.parent,
-                                             properties=node_score.properties,
-                                             lcia_scores=direct_lcia_scores)
+            direct_impact_score = NodeScores(
+                name=node_score.name,
+                parent=node_score.parent,
+                properties=node_score.properties,
+                lcia_scores=direct_lcia_scores,
+            )
             direct_impact_scores.append(direct_impact_score)
         return direct_impact_scores
 
