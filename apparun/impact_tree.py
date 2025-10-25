@@ -170,21 +170,16 @@ class ImpactTreeNode(BaseModel):
         self,
         transformed_params: Dict[
             str, Union[List[Union[str, float]], Union[str, float]]
-        ],
-        direct_impacts: bool = False,
+        ]
     ) -> LCIAScores:
         """
         Compute node's impacts with given parameters values.
         Multithreading is used to compute different impact methods in parallel.
         :param transformed_params: parameters, transformed by ImpactModelParam's
         transform method.
-        :param direct_impacts: if True, direct_impacts will be computed instead of
-        full impacts (i.e. sum of direct impacts and children direct impacts)
         :return: a dict mapping impact's name with corresponding score, or list of
         scores.
         """
-        if not self.models_compiled:
-            self.compile_models()
         lambda_models = {
             method: lambdify(
                 [param for param in transformed_params], model, modules=["numpy"]
@@ -209,9 +204,6 @@ class ImpactTreeNode(BaseModel):
         if isinstance(list(results.values())[0], np.ndarray):
             results_ = results.copy()
             results.update({key: value.tolist() for key, value in results_.items()})
-        if direct_impacts:
-            # TODO substract to every node its children's impact
-            pass
         return LCIAScores(scores=results)
 
     @staticmethod
