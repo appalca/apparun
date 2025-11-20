@@ -25,8 +25,6 @@ class ImpactTreeNode(BaseModel):
 
     name: str
     amount: Optional[Union[Expr, float]] = None
-    direct_impacts: Optional[Dict[str, Expr]] = {}
-    scaled_direct_impacts: Optional[Dict[str, Expr]] = {}
     models: Optional[Dict[str, Expr]] = {}
     parent: Optional[ImpactTreeNode] = None
     children: Optional[List[ImpactTreeNode]] = []
@@ -49,7 +47,7 @@ class ImpactTreeNode(BaseModel):
         except InvalidExpr:
             raise PydanticCustomError("float_expr", "Invalid float expression")
 
-    @field_validator("models", "direct_impacts", "scaled_direct_impacts", mode="before")
+    @field_validator("models", mode="before")
     @classmethod
     def validate_exprs(cls, exprs: Dict[str, str]) -> Dict[str, Expr]:
         try:
@@ -58,10 +56,6 @@ class ImpactTreeNode(BaseModel):
         except InvalidExpr as e:
             raise PydanticCustomError("invalid_expr", "", {"expr": e.expr})
         return exprs
-
-    @property
-    def models_compiled(self):
-        return len(self.models) > 0 and len(self.scaled_direct_impacts) > 0
 
     @property
     def unnested_descendants(self) -> List[ImpactTreeNode]:
@@ -83,23 +77,6 @@ class ImpactTreeNode(BaseModel):
         if self._combined_amount is None:
             self._combined_amount = self.amount * self.parent.combined_amount
         return self._combined_amount
-
-    def compile_models(self):
-        """
-        Replace descendants symbols in node's model by their corresponding model.
-        Result is stored in "compiled_model" node's attribute.
-        """
-        self.scaled_direct_impacts = {
-            method: self.combined_amount * direct_impact
-            for method, direct_impact in self.direct_impacts.items()
-        }
-        self.models = self.scaled_direct_impacts
-        for child in self.children:
-            child.compile_models()
-            self.models = {
-                method: model + child.models[method]
-                for method, model in self.models.items()
-            }
 
     def new_child(self, **args) -> ImpactTreeNode:
         """
@@ -137,21 +114,12 @@ class ImpactTreeNode(BaseModel):
     def to_dict(self) -> dict:
         """
         Convert self to dict.
-        :param compile: if True, all models in tree nodes will be compiled. ImpactModel
-        will be bigger, but its execution will be faster at first use.
         :return: self as a dict
         """
         return {
             "name": self.name,
             "models": {
                 str(method): str(model) for method, model in self.models.items()
-            },
-            "direct_impacts": {
-                str(method): str(model) for method, model in self.direct_impacts.items()
-            },
-            "scaled_direct_impacts": {
-                str(method): str(model)
-                for method, model in self.scaled_direct_impacts.items()
             },
             "children": [child.to_dict() for child in self.children],
             "properties": self.properties.properties,
@@ -170,8 +138,6 @@ class ImpactTreeNode(BaseModel):
             node = ImpactTreeNode(
                 name=impact_model_tree_node["name"],
                 models=impact_model_tree_node["models"],
-                direct_impacts=impact_model_tree_node["direct_impacts"],
-                scaled_direct_impacts=impact_model_tree_node["scaled_direct_impacts"],
                 properties=NodeProperties.from_dict(
                     impact_model_tree_node["properties"]
                 ),
@@ -205,34 +171,21 @@ class ImpactTreeNode(BaseModel):
         transformed_params: Dict[
             str, Union[List[Union[str, float]], Union[str, float]]
         ],
-        direct_impacts: bool = False,
     ) -> LCIAScores:
         """
         Compute node's impacts with given parameters values.
         Multithreading is used to compute different impact methods in parallel.
         :param transformed_params: parameters, transformed by ImpactModelParam's
         transform method.
-        :param direct_impacts: if True, direct_impacts will be computed instead of
-        full impacts (i.e. sum of direct impacts and children direct impacts)
         :return: a dict mapping impact's name with corresponding score, or list of
         scores.
         """
-        if not self.models_compiled:
-            self.compile_models()
-        if direct_impacts:
-            lambda_models = {
-                method: lambdify(
-                    [param for param in transformed_params], model, modules=["numpy"]
-                )
-                for method, model in self.scaled_direct_impacts.items()
-            }
-        else:
-            lambda_models = {
-                method: lambdify(
-                    [param for param in transformed_params], model, modules=["numpy"]
-                )
-                for method, model in self.models.items()
-            }
+        lambda_models = {
+            method: lambdify(
+                [param for param in transformed_params], model, modules=["numpy"]
+            )
+            for method, model in self.models.items()
+        }
         results = {}
         with ThreadPoolExecutor() as executor:
             futures = []

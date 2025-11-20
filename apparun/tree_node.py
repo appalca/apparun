@@ -94,6 +94,27 @@ class NodeScores(BaseModel):
             for value in all_values
         ]
 
+    @staticmethod
+    def full_to_direct_impacts(node_scores: List[NodeScores]) -> NodeScores:
+        direct_impact_scores = []
+        for node_score in node_scores:
+            to_substract = LCIAScores.sum(
+                [
+                    nd_sc.lcia_scores
+                    for nd_sc in node_scores
+                    if nd_sc.parent == node_score.name
+                ]
+            )
+            direct_lcia_scores = node_score.lcia_scores - to_substract
+            direct_impact_score = NodeScores(
+                name=node_score.name,
+                parent=node_score.parent,
+                properties=node_score.properties,
+                lcia_scores=direct_lcia_scores,
+            )
+            direct_impact_scores.append(direct_impact_score)
+        return direct_impact_scores
+
     def to_unpivoted_df(self) -> pd.DataFrame:
         df = self.lcia_scores.to_unpivoted_df()
         df["name"] = self.name

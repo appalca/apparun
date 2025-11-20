@@ -35,6 +35,16 @@ nodes_scores = impact_model.get_nodes_scores(
 )
 print(nodes_scores)
 
+# Scores can be combined by property, instead of by node
+scores_by_phase = impact_model.get_nodes_scores(
+    by_property="phase",
+    lifespan=3,
+    architecture="Maxwell",
+    cuda_core=[256, 512, 1024],
+    energy_per_inference=[0.05, 0.06, 0.065],
+)
+print(scores_by_phase)
+
 # Generate Tree Map figures for nodes
 # We can update default values
 # of impact models are changed beforehand. New min and max will be automatically adapted

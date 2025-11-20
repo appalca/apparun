@@ -6,7 +6,6 @@ from typing import List, Optional, Union
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import plotly.io as pio
 from pydantic import BaseModel
 
 from apparun.impact_model import ImpactModel
@@ -157,7 +156,6 @@ class TreeMapResult(ImpactModelResult):
                     root_color="lightgrey",
                 )
             )
-            pio.full_figure_for_development(fig, warn=False)
             self.save_figure(fig, name_suffix=method_name)
             figs.append(fig)
         return figs
@@ -225,7 +223,6 @@ class SankeyDiagramResult(ImpactModelResult):
                     )
                 ]
             )
-            pio.full_figure_for_development(fig, warn=False)
             self.save_figure(fig, name_suffix=method_name)
             figs.append(fig)
         return figs
@@ -269,7 +266,6 @@ class SobolIndexResult(ImpactModelResult):
             index="parameter", columns="method", values="sobol_s1"
         )
         fig = px.imshow(pivoted_table, text_auto=True)
-        pio.full_figure_for_development(fig, warn=False)
         self.save_figure(fig)
         return fig
 
@@ -300,7 +296,6 @@ class NodesSobolIndexResult(ImpactModelResult):
                 index="parameter", columns="node", values="sobol_s1"
             )
             fig = px.imshow(pivoted_table, text_auto=True)
-            pio.full_figure_for_development(fig, warn=False)
             self.save_figure(fig, name_suffix=method)
             figures.append(fig)
         return figures
@@ -338,7 +333,6 @@ class NodesUncertaintyResult(ImpactModelResult):
         figures = []
         for method in pd.unique(table["method"]):
             fig = px.box(table[table["method"] == method], x="node", y="score")
-            pio.full_figure_for_development(fig, warn=False)
             self.save_figure(fig, name_suffix=method)
             figures.append(fig)
         return figures
@@ -375,7 +369,6 @@ class UncertaintyResult(ImpactModelResult):
         figures = []
         for method in pd.unique(table["method"]):
             fig = px.box(table[table["method"] == method], x="node", y="score")
-            pio.full_figure_for_development(fig, warn=False)
             self.save_figure(fig, name_suffix=method)
             figures.append(fig)
         return figures

@@ -134,8 +134,6 @@ class ImpactModel(BaseModel):
         :param compile_models: if True, all models in tree nodes will be compiled.
         ImpactModel will be bigger, but its execution will be faster at first use.
         """
-        if compile_models:
-            self.tree.compile_models()
         with open(filepath, "w") as stream:
             yaml.dump(self.to_dict(), stream, sort_keys=False)
 
@@ -215,13 +213,18 @@ class ImpactModel(BaseModel):
         return scores
 
     def get_nodes_scores(
-        self, by_property: Optional[str] = None, **params
+        self,
+        by_property: Optional[str] = None,
+        direct_impacts: Optional[bool] = False,
+        **params,
     ) -> List[NodeScores]:
         """
         Get impact scores of the each node for each impact method, according to the
         parameters.
         :param by_property: if different than None, results will be pooled by nodes
         sharing the same property value. Property name is the value of by_property.
+        :param direct_impacts: if True, direct_impacts will be computed instead of
+        full impacts (i.e. sum of direct impacts and children direct impacts)
         :param params: value, or list of values of the impact model's parameters.
         List of values must have the same length. If single values are provided
         alongside a list of values, it will be duplicated to the appropriate length.
@@ -243,11 +246,13 @@ class ImpactModel(BaseModel):
                 properties=node.properties,
                 parent=node.parent.name if node.parent is not None else "",
                 lcia_scores=node.compute(
-                    transformed_params, direct_impacts=by_property is not None
+                    transformed_params,
                 ),
             )
             for node in self.tree.unnested_descendants
         ]
+        if direct_impacts or by_property is not None:
+            scores = NodeScores.full_to_direct_impacts(scores)
         if by_property is not None:
             scores = NodeScores.combine_by_property(scores, by_property)
         logger.info("Nodes scores computed with no error")
