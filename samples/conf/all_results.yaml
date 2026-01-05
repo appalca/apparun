@@ -62,3 +62,22 @@
     png_save_path: "outputs/figures/"
     width: 1000
     height: 700
+- result_name: scenario_comparison
+  args:
+    impact_model:
+      name: nvidia_ai_gpu_chip
+    scenarios_parameters:
+      gtx_950:
+        cuda_core: 768
+        architecture: Maxwell
+      gtx_1050:
+        cuda_core: 640
+        architecture: Pascal
+    by_property: phase
+    output_name: nvidia_ai_gpu_chip-scenario_comparison
+    html_save_path: "outputs/figures/"
+    pdf_save_path: "outputs/figures/"
+    table_save_path: "outputs/tables/"
+    png_save_path: "outputs/figures/"
+    width: 1000
+    height: 700

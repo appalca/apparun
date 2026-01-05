@@ -1,12 +1,12 @@
-import os
-import traceback
 from typing import Optional
 
+import streamlit as st
 import typer
 import yaml
 from yaml import YAMLError
 
 import apparun.core
+from apparun.gui.modules import GUI
 from apparun.logger import init_logger, logger
 
 cli_app = typer.Typer()
@@ -109,6 +109,14 @@ def results(results_config_file_path: str):
         exit(1)
 
 
+@cli_app.command()
+def generate_gui(gui_config_path: str):
+    gui_config = load_yaml(gui_config_path, "r")
+    gui = GUI(**gui_config)
+    gui.setup_layout()
+    gui.run()
+
+
 if __name__ == "__main__":
     init_logger()
-    cli_app()
+    cli_app(standalone_mode=False)

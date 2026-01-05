@@ -1,0 +1,58 @@
+name: "Preconfigured tool for NVIDIA AI GPU"
+modules:
+  - impact_model_path: "samples/impact_models/nvidia_ai_gpu_chip.yaml"
+    name: "Scenario comparison by phase"
+    input_panel:
+      type: input_scenario_form_panel
+      name: "GPU parameters"
+      fields:
+        - type: float
+          name: cuda_core
+          min: 0
+          max: 1024
+          default: 512
+        - type: enum
+          name: architecture
+          options:
+            - Pascal
+            - Maxwell
+        - type: float
+          name: lifespan
+          min: 0
+          max: 5
+          default: 2
+        - type: enum
+          name: usage_location
+          options:
+            - FR
+            - EU
+    output_panels:
+      - type: scenario_comparison_dynamic_output_panel
+        y: EFV3_CLIMATE_CHANGE
+        hue: phase
+        by_property: "phase"
+  - name: "Random explanation"
+    output_panels:
+      - type: markdown
+        message: "**Lorem ipsum** dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+  - impact_model_path: "samples/impact_models/nvidia_ai_gpu_chip.yaml"
+    name: "Test"
+    input_panel:
+      type: input_scenario_form_panel
+      name: "Still GPU parameters but less"
+      fields:
+        - type: float
+          name: cuda_core
+          min: 0
+          max: 1024
+          default: 512
+        - type: enum
+          name: architecture
+          options:
+            - Pascal
+            - Maxwell
+          default: Pascal
+    output_panels:
+      - type: scenario_comparison_dynamic_output_panel
+        y: EFV3_CLIMATE_CHANGE
+        hue: component

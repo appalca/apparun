@@ -59,7 +59,7 @@ tree_map_result = get_result("tree_map")(
     html_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
 )
 tree_map_table = tree_map_result.get_table()
-tree_map_result.get_figure(tree_map_table)
+tree_map_result.get_figure(tree_map_table, save=True)
 
 # Generate Sankey figures for nodes
 sankey_result = get_result("sankey")(
@@ -70,7 +70,7 @@ sankey_result = get_result("sankey")(
     html_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
 )
 sankey_table = sankey_result.get_table()
-sankey_result.get_figure(sankey_table)
+sankey_result.get_figure(sankey_table, save=True)
 
 # Generate Sobol figures for nodes
 sobol_result = get_result("sobol")(
@@ -82,7 +82,7 @@ sobol_result = get_result("sobol")(
     html_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
 )
 sobol_table = sobol_result.get_table()
-sobol_result.get_figure(sobol_table)
+sobol_result.get_figure(sobol_table, save=True)
 
 # Generate uncertainty figure for nodes
 uncertainty_nodes_result = get_result("nodes_uncertainty")(
@@ -94,35 +94,32 @@ uncertainty_nodes_result = get_result("nodes_uncertainty")(
     html_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
 )
 uncertainty_nodes_table = uncertainty_nodes_result.get_table()
-uncertainty_nodes_result.get_figure(uncertainty_nodes_table)
+uncertainty_nodes_result.get_figure(uncertainty_nodes_table, save=True)
+
+# Generate scenario comparison figure
+scenario_comparison_result = get_result("scenario_comparison")(
+    impact_model=impact_model,
+    scenarios_parameters={
+        "gtx_950": {"cuda_core": 768, "architecture": "Maxwell"},
+        "gtx_1050": {"cuda_core": 640, "architecture": "Pascal"},
+    },
+    by_property="phase",
+    output_name="scenario_comparison",
+    pdf_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
+    table_save_path=os.path.join(OUTPUT_FILES_PATH, "tables/"),
+    html_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
+)
+scenario_comparison_table = scenario_comparison_result.get_table()
+scenario_comparison_result.get_figure(scenario_comparison_table, save=True)
 
 
 # New types of results can be generated in user script, without modifying Appa Run
 # source code, thanks to register_result decorator.
-
-
-@register_result("new_nodes_uncertainty")
-class NewNodesUncertaintyResult(NodesUncertaintyResult):
-    """
-    Generate uncertainty for each node using Monte Carlo. Result figure as a boxplot.
-    """
-
-    def get_figure(self, table: pd.DataFrame):
-        """ """
-        figures = []
-        for method in pd.unique(table["method"]):
-            fig = px.box(table[table["method"] == method], x="score", y="node")
-            pio.full_figure_for_development(fig, warn=False)
-            self.save_figure(fig, name_suffix=method)
-            figures.append(fig)
-        return figures
-
-
 # Let's compute nodes uncertainty again, with custom class.
 
 
-@register_result("uncertainty")
-class UncertaintyResult(ImpactModelResult):
+@register_result("new_uncertainty")
+class NewUncertaintyResult(ImpactModelResult):
     n: int
     """
     Generate uncertainty for each node using Monte Carlo. Result figure as a boxplot.
@@ -140,24 +137,25 @@ class UncertaintyResult(ImpactModelResult):
             lcia_score.to_csv(figure_path)
         return lcia_score
 
-    def get_figure(self, table: pd.DataFrame):
+    def get_figure(self, table: pd.DataFrame, save=True):
         """ """
         figures = []
         for method in pd.unique(table["method"]):
             fig = px.box(table[table["method"] == method], x="node", y="score")
             pio.full_figure_for_development(fig, warn=False)
-            self.save_figure(fig, name_suffix=method)
-            figures.append(fig)
+            if save:
+                self.save_figure(fig, name_suffix=method)
+                figures.append(fig)
         return figures
 
 
-new_nodes_uncertainty_result = get_result("new_nodes_uncertainty")(
+new_nodes_uncertainty_result = get_result("new_uncertainty")(
     impact_model=impact_model,
     n=4096,
-    output_name="new_uncertainty_nodes",
+    output_name="new_uncertainty",
     pdf_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
     table_save_path=os.path.join(OUTPUT_FILES_PATH, "tables/"),
     html_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
 )
 new_nodes_uncertainty_table = new_nodes_uncertainty_result.get_table()
-new_nodes_uncertainty_result.get_figure(new_nodes_uncertainty_table)
+new_nodes_uncertainty_result.get_figure(new_nodes_uncertainty_table, save=True)
