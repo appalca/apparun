@@ -5,7 +5,10 @@ from typing import Dict, List, Optional, Set, Union
 import pandas as pd
 from pydantic import BaseModel
 from apparun.logger import logger
-from apparun.exceptions import InvalidNormFileError
+from apparun.exceptions import InvalidFileError
+
+dict_method_u_score = { 'pef30': "apparun/resources/pef30/",
+                        'pef31': "apparun/resources/pef31/"}
 
 class LCIAScores(BaseModel):
     """
@@ -30,60 +33,92 @@ class LCIAScores(BaseModel):
         else:
             df = pd.DataFrame(self.scores)
         df = pd.melt(df, var_name="method", value_name="score")
+        nb_par_score = (df['method']==df['method'].iloc[0]).sum()
+        if nb_par_score > 1:
+            df_col = df.iloc[lambda x: x.index % nb_par_score == 0].get(["method"]).sort_values(by=['method'], ignore_index=True)
+            for i in range (0, nb_par_score):
+                tmp = df.iloc[lambda x: x.index % nb_par_score == i].sort_values(by=['method'], ignore_index=True) 
+                df_col.insert(i+1, "score", tmp.get("score"), allow_duplicates=True)
+            return df_col
         return df
     
-    def to_unique_score_df(
-            self, 
-            filenorm: str, 
-            fileweight: Optional[str] = None, 
-            u_sum: Optional[bool] = False
-            ) -> pd.DataFrame:
-        """ 
-        Computes normalisation, weighting and sum of each impact category 
-        to obtain unique score. 
-        :param filenorm: file path to .csv containing normalisation factors. 
-        :param fileweight: file path to .csv containing weighting factors.
-        :u_sum: if True, function returns unique score after sum. Otherwise, 
-        returns normalised and weighting results for each impact category.
+    def to_normalisation(
+                self,
+                method: Optional[str] = 'pef30',
+                filenorm:  Optional[str] = None
+        ) -> LCIAScores:
         """
-        scores = self.to_unpivoted_df()
+        Computes normalisation of LCIAScores using .csv file with impact categories and normalisation factors.
+        :param: method -> allows to use default 'pef30' or 'pef31' normalisation factors.
+        :param: filenorm -> allows to give a personal .csv file with normalisation factors.  
+        """
+        if filenorm is None:
+            filenorm = dict_method_u_score.get(method)+'normalisation_factor.csv'
+            logger.warning(f'No given normalisation file, using default {filenorm}')
+        score = LCIAScores(scores=self.scores.copy())
+        normalisation_factor = pd.read_csv(filenorm).sort_values(by=['method'])
+        normalisation_factor=normalisation_factor[normalisation_factor['method'].isin(score.scores.keys())].set_index('method',drop=True)
+        if len(normalisation_factor) != len(score.scores.keys()):
+            raise InvalidFileError(filenorm)  
+        for method_name in score.scores.keys():
+            for i in range (0, len(score.scores[method_name])) :
+                score.scores[method_name][i] = score.scores[method_name][i] / normalisation_factor.at[method_name,'score']
 
-        # Verify data from normalisation and weighting files
-        normalisation_factor = pd.read_csv(filenorm).sort_values(by=['method'], ignore_index=True)
-        if scores['method'].nunique() != normalisation_factor['method'].nunique():
-            raise InvalidNormFileError (filenorm, normalisation_factor['method'].nunique(), scores['method'].nunique())
-        if (scores['method'].sort_values(ignore_index=True).unique()==normalisation_factor['method'].to_numpy()).all()==False:
-            logger.warning(f'Warning: Impact category names from {filenorm} different from model. Check correspondances.') 
+        return LCIAScores(scores=score.scores) 
 
-        if fileweight is not None :
-            weighting_factor = pd.read_csv(fileweight).sort_values(by=['method'], ignore_index=True)
-            if scores['method'].nunique() == weighting_factor['method'].nunique():
-                if (scores['method'].sort_values(ignore_index=True).unique()==weighting_factor['method'].to_numpy()).all()==False:
-                    logger.warning(f'Warning: Impact category names from {fileweight} different from model. Check correspondance.')
-            else:
-                weighting_factor = normalisation_factor.copy()
-                weighting_factor['score'] = 1
-                logger.warning(f'Number of impact categories from {fileweight} != model. Weighting not applied')
-        else :
-            weighting_factor = normalisation_factor.copy()
-            weighting_factor['score'] = 1
-            logger.warning("Warning: no file for weights. Weighting not applied.")
+    def to_weighting(
+                self,
+                method: Optional[str] = 'pef30',
+                fileweight:  Optional[str] = None
+        ) -> LCIAScores:
+        """
+        Computes normalisation of LCIAScores using .csv file with impact categories and normalisation factors.
+        :param: method -> allows to use default 'pef30' or 'pef31' weighting factors.
+        :param: fileweight -> allows to give a personal .csv file with weighting factors.  
+        """
+        if fileweight is None:
+            fileweight = dict_method_u_score.get(method)+'weighting_factor.csv'
+            logger.warning(f'No given weighting file, using default {fileweight}')
+        score = LCIAScores(scores=self.scores.copy())
+        weighting_factor = pd.read_csv(fileweight).sort_values(by=['method'])
+        weighting_factor=weighting_factor[weighting_factor['method'].isin(score.scores.keys())].set_index('method',drop=True)
+        if len(weighting_factor) != len(score.scores.keys()):
+            raise InvalidFileError(fileweight)  
+        
+        for method_name in score.scores.keys():
+            for i in range (0, len(score.scores[method_name])) :
+                score.scores[method_name][i] = score.scores[method_name][i] * weighting_factor.at[method_name,'score']
 
-        # Compute normalisation, weighting and sum depending on parameters
-        nb_par_scores = (scores['method']==scores['method'].iloc[0]).sum() 
-        score = scores.iloc[lambda x: x.index % nb_par_scores == 0].get(["method"]).sort_values(by=['method'], ignore_index=True) # initialise df w/ columns 
-        if u_sum is True:
-            unique_score = pd.DataFrame(data={'method':['EFV3_UNIQUE_SCORE']})
-        for i in range (0, nb_par_scores) :
-            tmp = scores.iloc[lambda x: x.index % nb_par_scores == i].sort_values(by=['method'], ignore_index=True) 
-            tmp['score'] =  tmp['score'] / normalisation_factor['score'] * weighting_factor['score']
-            score.insert(i+1, "score", tmp.get("score"), allow_duplicates=True)
-            if u_sum is True:
-                unique_score.insert(i+1, "score", sum(tmp['score']), allow_duplicates=True)
-        if u_sum is True:
-            return unique_score
-        else :
-            return score
+        return LCIAScores(scores=score.scores) 
+
+    def to_unique_score(
+                self,
+                isNorm: Optional[bool] = False,
+                isWeight: Optional[bool] = False,
+                method: Optional[str] = 'pef30',
+                filenorm: Optional[str] = None,
+                fileweight: Optional[str] = None 
+        ) -> LCIAScores:
+        """
+        Computes sum of LCIAScores impact category scores into unique score. Possible to apply normalisation
+        and/or weighting before aggregating scores.
+        :param: isNorm = True -> apply normalisation before sum into unique score.
+        :param: isWeight = True -> apply weighting (after normalisation) before sum into unique score.
+        :param: method -> allows to use default 'pef30' or 'pef31' normalisation and weighting factors.
+        :param: filenorm -> allows to give a personal .csv file with normalisation factors.  
+        :param: fileweight -> allows to give a personal .csv file with weighting factors.  
+        """
+        score = LCIAScores(scores=self.scores.copy())
+        if isNorm is not False:
+            score = score.to_normalisation(method=method, filenorm=filenorm)
+        if isWeight is not False:
+            score = score.to_weighting(method=method, fileweight=fileweight)
+
+        sum_score = [sum(x) for x in zip(*score.scores.values())]
+        unique_score = {
+            "UNIQUE_SCORE": sum_score
+        }
+        return LCIAScores(scores=unique_score)
 
     def __add__(self, other) -> LCIAScores:
         scores = {

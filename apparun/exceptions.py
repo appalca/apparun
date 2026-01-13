@@ -9,19 +9,17 @@ class InvalidExpr(Exception):
         self.expr = expr
         self.ctx = ctx or {}
 
-class InvalidNormFileError(Exception):
+class InvalidFileError(Exception):
     """
     Exception raised when the number of normalisation impact 
     categories is not equal to impact model impact categories.
     """
 
-    def __init__(self, file: str, nimpact_cat_norm: int, nimpact_cat_mod: int):
+    def __init__(self, file: str):
         super().__init__()
         self.file = file
-        self.nimpact_cat_norm = nimpact_cat_norm
-        self.nimpact_cat_mod = nimpact_cat_mod
     
     def __str__(self):
-        return f'Impact categories from {self.file} = {self.nimpact_cat_norm} while model has {self.nimpact_cat_mod}'
+        return f'Impact categories from {self.file} different with impact model categories. Check correspondances.'
 
 
