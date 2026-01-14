@@ -42,7 +42,7 @@ class LCIAScores(BaseModel):
     ) -> LCIAScores:
         """
         Computes normalisation of LCIAScores using .csv file with impact categories and normalisation factors.
-        :param: method -> allows to use default 'pef30' or 'pef31' normalisation factors.
+        :param: method -> allows to use default MethodUniqueScore.EF30 or EF31 normalisation factors.
         :param: filenorm -> allows to give a personal .csv file with normalisation factors.
         """
         if filenorm is None:
@@ -71,7 +71,7 @@ class LCIAScores(BaseModel):
     ) -> LCIAScores:
         """
         Computes normalisation of LCIAScores using .csv file with impact categories and normalisation factors.
-        :param: method -> allows to use default 'pef30' or 'pef31' weighting factors.
+        :param: method -> allows to use default MethodUniqueScore.EF30 or EF31 weighting factors.
         :param: fileweight -> allows to give a personal .csv file with weighting factors.
         """
         if fileweight is None:
@@ -107,7 +107,7 @@ class LCIAScores(BaseModel):
         and/or weighting before aggregating scores.
         :param: isNorm = True -> apply normalisation before sum into unique score.
         :param: isWeight = True -> apply weighting (after normalisation) before sum into unique score.
-        :param: method -> allows to use default 'pef30' or 'pef31' normalisation and weighting factors.
+        :param: method -> allows to use default MethodUniqueScore.EF30 or EF31 normalisation and weighting factors.
         :param: filenorm -> allows to give a personal .csv file with normalisation factors.
         :param: fileweight -> allows to give a personal .csv file with weighting factors.
         """
