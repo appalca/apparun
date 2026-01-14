@@ -137,4 +137,4 @@ class MethodUniqueScore(str, Enum):
         return self.value + "normalisation_factor.csv"
 
     def path_to_weight(self) -> str:
-        return self.value + "normalisation_factor.csv"
+        return self.value + "weighting_factor.csv"
