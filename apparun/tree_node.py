@@ -6,6 +6,7 @@ import pandas as pd
 from pydantic import BaseModel
 
 from apparun.score import LCIAScores
+from apparun.impact_methods import MethodUniqueScore
 
 
 class NodeProperties(BaseModel):
@@ -120,10 +121,10 @@ class NodeScores(BaseModel):
         df["name"] = self.name
         df["parent"] = self.parent
         return df
-    
+
     def to_normalisation(
             self,
-            method: Optional[str] = 'pef30',
+            method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
             filenorm:  Optional[str] = None
             ) -> NodeScores:
         score = NodeScores(
@@ -133,10 +134,10 @@ class NodeScores(BaseModel):
             lcia_scores= self.lcia_scores.to_normalisation(method=method, filenorm=filenorm)
         )
         return score
-    
+
     def to_weighting(
             self,
-            method: Optional[str] = 'pef30',
+            method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
             fileweight:  Optional[str] = None
                      ) -> NodeScores:
         score = NodeScores(
@@ -146,19 +147,19 @@ class NodeScores(BaseModel):
             lcia_scores= self.lcia_scores.to_weighting(method=method, fileweight=fileweight)
         )
         return score
-    
+
     def to_unique_score(
-            self, 
+            self,
             isNorm: Optional[bool] = False,
             isWeight: Optional[bool] = False,
-            method: Optional[str] = 'pef30',
+            method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
             filenorm: Optional[str] = None,
             fileweight: Optional[str] = None ) -> NodeScores:
         score = NodeScores(
             name = self.name,
             parent = self.parent,
             properties=self.properties,
-            lcia_scores= self.lcia_scores.to_unique_score(isNorm=isNorm, isWeight=isWeight, 
+            lcia_scores= self.lcia_scores.to_unique_score(isNorm=isNorm, isWeight=isWeight,
                                                           method=method, filenorm=filenorm,
                                                           fileweight=fileweight)
         )
