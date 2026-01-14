@@ -5,8 +5,8 @@ from typing import Dict, List, Optional, Set, Union
 import pandas as pd
 from pydantic import BaseModel
 
-from apparun.score import LCIAScores
 from apparun.impact_methods import MethodUniqueScore
+from apparun.score import LCIAScores
 
 
 class NodeProperties(BaseModel):
@@ -123,44 +123,53 @@ class NodeScores(BaseModel):
         return df
 
     def to_normalisation(
-            self,
-            method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
-            filenorm:  Optional[str] = None
-            ) -> NodeScores:
+        self,
+        method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
+        filenorm: Optional[str] = None,
+    ) -> NodeScores:
         score = NodeScores(
-            name = self.name,
-            parent = self.parent,
+            name=self.name,
+            parent=self.parent,
             properties=self.properties,
-            lcia_scores= self.lcia_scores.to_normalisation(method=method, filenorm=filenorm)
+            lcia_scores=self.lcia_scores.to_normalisation(
+                method=method, filenorm=filenorm
+            ),
         )
         return score
 
     def to_weighting(
-            self,
-            method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
-            fileweight:  Optional[str] = None
-                     ) -> NodeScores:
+        self,
+        method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
+        fileweight: Optional[str] = None,
+    ) -> NodeScores:
         score = NodeScores(
-            name = self.name,
-            parent = self.parent,
+            name=self.name,
+            parent=self.parent,
             properties=self.properties,
-            lcia_scores= self.lcia_scores.to_weighting(method=method, fileweight=fileweight)
+            lcia_scores=self.lcia_scores.to_weighting(
+                method=method, fileweight=fileweight
+            ),
         )
         return score
 
     def to_unique_score(
-            self,
-            isNorm: Optional[bool] = False,
-            isWeight: Optional[bool] = False,
-            method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
-            filenorm: Optional[str] = None,
-            fileweight: Optional[str] = None ) -> NodeScores:
+        self,
+        isNorm: Optional[bool] = False,
+        isWeight: Optional[bool] = False,
+        method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
+        filenorm: Optional[str] = None,
+        fileweight: Optional[str] = None,
+    ) -> NodeScores:
         score = NodeScores(
-            name = self.name,
-            parent = self.parent,
+            name=self.name,
+            parent=self.parent,
             properties=self.properties,
-            lcia_scores= self.lcia_scores.to_unique_score(isNorm=isNorm, isWeight=isWeight,
-                                                          method=method, filenorm=filenorm,
-                                                          fileweight=fileweight)
+            lcia_scores=self.lcia_scores.to_unique_score(
+                isNorm=isNorm,
+                isWeight=isWeight,
+                method=method,
+                filenorm=filenorm,
+                fileweight=fileweight,
+            ),
         )
         return score

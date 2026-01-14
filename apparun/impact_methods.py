@@ -58,6 +58,7 @@ class MethodFullName(str, Enum):
         """
         return MethodShortName[self.name]
 
+
 class MethodShortName(str, Enum):
     """
     Short version of impact methods supported by Brightway, to ease readability of
@@ -127,12 +128,13 @@ class MethodShortName(str, Enum):
         """
         return MethodFullName[self.name]
 
+
 class MethodUniqueScore(str, Enum):
-    EF30 = 'apparun/resources/pef30/'
-    EF31 = 'apparun/resources/pef31/'
+    EF30 = "apparun/resources/pef30/"
+    EF31 = "apparun/resources/pef31/"
 
     def path_to_norm(self) -> str:
-        return self.value + 'normalisation_factor.csv'
+        return self.value + "normalisation_factor.csv"
 
     def path_to_weight(self) -> str:
-        return self.value + 'normalisation_factor.csv'
+        return self.value + "normalisation_factor.csv"
