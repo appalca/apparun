@@ -8,9 +8,9 @@ from apparun.impact_model import ImpactModel
 from apparun.logger import logger
 from apparun.results import get_result
 
-IMPACTS_MODEL_DIR = os.environ.get("APPARUN_IMPACT_MODELS_DIR")
-if IMPACTS_MODEL_DIR is None:
-    logger.error("Environment variable IMPACTS_MODEL_DIR is undefined")
+APPARUN_IMPACT_MODELS_DIR = os.environ.get("APPARUN_IMPACT_MODELS_DIR")
+if APPARUN_IMPACT_MODELS_DIR is None:
+    logger.error("Environment variable APPARUN_IMPACT_MODELS_DIR is undefined")
     exit(1)
 
 
@@ -50,7 +50,7 @@ def compute_impacts(
     :return: a dict mapping impact names and corresponding score, or list of scores.
     """
     impact_model = ImpactModel.from_yaml(
-        os.path.join(IMPACTS_MODEL_DIR, f"{impact_model_name}.yaml")
+        os.path.join(APPARUN_IMPACT_MODELS_DIR, f"{impact_model_name}.yaml")
     )
 
     if all_nodes:
@@ -66,10 +66,10 @@ def get_valid_models() -> List[str]:
     :return: a list of all valid impact models.
     """
     valid_impact_models = []
-    for file in os.listdir(IMPACTS_MODEL_DIR):
+    for file in os.listdir(APPARUN_IMPACT_MODELS_DIR):
         if file.endswith(".yaml"):
             try:
-                ImpactModel.from_yaml(os.path.join(IMPACTS_MODEL_DIR, file))
+                ImpactModel.from_yaml(os.path.join(APPARUN_IMPACT_MODELS_DIR, file))
                 valid_impact_models.append(file.replace(".yaml", ""))
             except KeyError:
                 logger.error(
@@ -87,7 +87,7 @@ def get_model_params(impact_model_name: str) -> List[Dict]:
     :return: a list of parameters required by the model.
     """
     impact_model = ImpactModel.from_yaml(
-        os.path.join(IMPACTS_MODEL_DIR, f"{impact_model_name}.yaml")
+        os.path.join(APPARUN_IMPACT_MODELS_DIR, f"{impact_model_name}.yaml")
     )
     return [parameter.to_dict() for parameter in impact_model.parameters]
 
@@ -109,7 +109,7 @@ def compute_results(results_config: List[Dict]):
             ]["parameters"]
         result_constructor_args["impact_model"] = ImpactModel.from_yaml(
             os.path.join(
-                IMPACTS_MODEL_DIR,
+                APPARUN_IMPACT_MODELS_DIR,
                 f"{result_constructor_args['impact_model']['name']}.yaml",
             )
         )

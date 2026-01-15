@@ -336,16 +336,13 @@ def test_valid_single_raw_values(impact_model):
     """
     parameters = {
         "lifespan": 1.254,
-        "cuda_core": 500,
-        "architecture": "Maxwell",
         "usage_location": "FR",
     }
 
     expected_values = {
         param.name: parameters[param.name]
-        if param.name in parameters
-        else param.default
         for param in impact_model.parameters
+        if param.name in parameters
     }
 
     try:
@@ -367,21 +364,12 @@ def test_valid_list_raw_values(impact_model):
     """
     parameters = {
         "lifespan": [1.254, 1.05, 2.9999999],
-        "cuda_core": [500, 461, 563],
-        "architecture": "Maxwell",
         "usage_location": "FR",
     }
 
     expected_values = {
-        **{
-            param.name: [param.default] * 3
-            for param in impact_model.parameters
-            if param.name not in parameters
-        },
-        **{
-            name: value if isinstance(value, list) else [value] * 3
-            for name, value in parameters.items()
-        },
+        name: value if isinstance(value, list) else [value] * 3
+        for name, value in parameters.items()
     }
 
     try:
@@ -406,21 +394,15 @@ def test_valid_single_expr_values(impact_model):
         "lifespan": "sqrt(cuda_core) * energy_per_inference",
         "cuda_core": {"architecture": {"Maxwell": 461, "Pascal": 520}},
         "architecture": "Maxwell",
+        "usage_location": "EU",
         "energy_per_inference": {"usage_location": {"EU": 0.05, "FR": 0.02}},
     }
 
     expected_values = {
-        **{
-            param.name: param.default
-            for param in impact_model.parameters
-            if param.name not in parameters
-        },
-        **{
-            "lifespan": 1.07354552768,
-            "cuda_core": 461,
-            "energy_per_inference": 0.05,
-            "architecture": "Maxwell",
-        },
+        "lifespan": 1.07354552768,
+        "cuda_core": 461,
+        "energy_per_inference": 0.05,
+        "architecture": "Maxwell",
     }
 
     try:
@@ -453,18 +435,11 @@ def test_valid_list_expr_values(impact_model):
     }
 
     expected_values = {
-        **{
-            param.name: [param.default] * 3
-            for param in impact_model.parameters
-            if param.name not in parameters
-        },
-        **{
-            "lifespan": [1.1525, 1.02054254665, 1.41],
-            "cuda_core": [461, 461, 461],
-            "energy_per_inference": [0.05, 0.05, 0.02],
-            "architecture": ["Maxwell", "Maxwell", "Maxwell"],
-            "usage_location": ["EU", "EU", "FR"],
-        },
+        "lifespan": [1.1525, 1.02054254665, 1.41],
+        "cuda_core": [461, 461, 461],
+        "energy_per_inference": [0.05, 0.05, 0.02],
+        "architecture": ["Maxwell", "Maxwell", "Maxwell"],
+        "usage_location": ["EU", "EU", "FR"],
     }
 
     try:

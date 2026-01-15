@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 import plotly.express as px
@@ -51,8 +51,8 @@ class ImpactModelResult(BaseModel):
     by executing an impact model.
     """
 
-    output_name: str
-    impact_model: ImpactModel
+    output_name: Optional[str] = None
+    impact_model: Optional[ImpactModel] = None
     html_save_path: Optional[str] = None
     pdf_save_path: Optional[str] = None
     png_save_path: Optional[str] = None
@@ -75,12 +75,13 @@ class ImpactModelResult(BaseModel):
         """
         return pd.DataFrame()
 
-    def get_figure(self, table: pd.DataFrame):
+    def get_figure(self, table: pd.DataFrame, save: bool = False):
         """
         Abstract method.
         Generate the output as a figures, or a collection of figures, using the output
         of the get_table method.
         :param table: tabular result data.
+        :param save: also save the figure(s) on top of returning it
         :return: figure, or collection of figure generated.
         """
         return None
@@ -110,6 +111,11 @@ class ImpactModelResult(BaseModel):
             figure_path = os.path.join(self.png_save_path, f"{filename}.png")
             fig.write_image(figure_path, width=self.width, height=self.height)
 
+    @staticmethod
+    def px_fig_in_subplot(subplot_fig: go.Figure, px_fig: go.Figure, row, col):
+        for fig_trace in px_fig["data"]:
+            subplot_fig.add_trace(fig_trace, row=row, col=col)
+
 
 @register_result("tree_map")
 class TreeMapResult(ImpactModelResult):
@@ -136,7 +142,7 @@ class TreeMapResult(ImpactModelResult):
             node_scores.to_csv(figure_path)
         return node_scores
 
-    def get_figure(self, table: pd.DataFrame):
+    def get_figure(self, table: pd.DataFrame, save: bool = False):
         """
         Generate one distinct treemap per impact method.
         Save figure(s) to disk, according to the configuration specified in result
@@ -156,7 +162,8 @@ class TreeMapResult(ImpactModelResult):
                     root_color="lightgrey",
                 )
             )
-            self.save_figure(fig, name_suffix=method_name)
+            if save:
+                self.save_figure(fig, name_suffix=method_name)
             figs.append(fig)
         return figs
 
@@ -194,7 +201,7 @@ class SankeyDiagramResult(ImpactModelResult):
         )
         return node_scores
 
-    def get_figure(self, table: pd.DataFrame) -> List[go.Figure]:
+    def get_figure(self, table: pd.DataFrame, save: bool = False) -> List[go.Figure]:
         """
         Generate one distinct Sankey diagram per impact method.
         Save figure(s) to disk, according to the configuration specified in result
@@ -223,7 +230,8 @@ class SankeyDiagramResult(ImpactModelResult):
                     )
                 ]
             )
-            self.save_figure(fig, name_suffix=method_name)
+            if save:
+                self.save_figure(fig, name_suffix=method_name)
             figs.append(fig)
         return figs
 
@@ -253,7 +261,7 @@ class SobolIndexResult(ImpactModelResult):
             table.to_csv(figure_path)
         return table
 
-    def get_figure(self, table: pd.DataFrame):
+    def get_figure(self, table: pd.DataFrame, save: bool = False):
         """
         Generate a heatmap for S1 sobol indices of each model's parameter, and for each
         impact method.
@@ -266,7 +274,8 @@ class SobolIndexResult(ImpactModelResult):
             index="parameter", columns="method", values="sobol_s1"
         )
         fig = px.imshow(pivoted_table, text_auto=True)
-        self.save_figure(fig)
+        if save:
+            self.save_figure(fig)
         return fig
 
 
@@ -287,7 +296,7 @@ class NodesSobolIndexResult(ImpactModelResult):
             table.to_csv(figure_path)
         return table
 
-    def get_figure(self, table: pd.DataFrame):
+    def get_figure(self, table: pd.DataFrame, save: bool = False):
         """ """
         figures = []
         for method in pd.unique(table["method"]):
@@ -296,7 +305,8 @@ class NodesSobolIndexResult(ImpactModelResult):
                 index="parameter", columns="node", values="sobol_s1"
             )
             fig = px.imshow(pivoted_table, text_auto=True)
-            self.save_figure(fig, name_suffix=method)
+            if save:
+                self.save_figure(fig, name_suffix=method)
             figures.append(fig)
         return figures
 
@@ -324,18 +334,16 @@ class NodesUncertaintyResult(ImpactModelResult):
             table.to_csv(figure_path)
         return table
 
-    def get_figure(self, table: pd.DataFrame):
+    def get_figure(self, table: pd.DataFrame, save: bool = False):
         """
         Display uncertainty result of each node with boxplots, one figure per impact.
         :param table: results of each draw for each node as a long format table
         :return: all figures generated
         """
-        figures = []
-        for method in pd.unique(table["method"]):
-            fig = px.box(table[table["method"] == method], x="node", y="score")
-            self.save_figure(fig, name_suffix=method)
-            figures.append(fig)
-        return figures
+        fig = px.box(table, x="node", y="score", facet_row="method")
+        if save:
+            self.save_figure(fig)
+        return fig
 
 
 @register_result("uncertainty")
@@ -360,15 +368,48 @@ class UncertaintyResult(ImpactModelResult):
             lcia_score.to_csv(figure_path)
         return lcia_score
 
-    def get_figure(self, table: pd.DataFrame):
+    def get_figure(self, table: pd.DataFrame, save: bool = False):
         """
         Display uncertainty result of FU with boxplot, one figure per impact.
         :param table: results of each draw for each node as a long format table
         :return: all figures generated
         """
-        figures = []
-        for method in pd.unique(table["method"]):
-            fig = px.box(table[table["method"] == method], x="node", y="score")
-            self.save_figure(fig, name_suffix=method)
-            figures.append(fig)
-        return figures
+        fig = px.box(table, x="node", y="score", facet_row="method")
+        if save:
+            self.save_figure(fig)
+        return fig
+
+
+@register_result("scenario_comparison")
+class ScenarioComparisonResult(ImpactModelResult):
+    scenarios_parameters: Dict[str, Dict[str, Any]]
+    by_property: Optional[str] = None
+
+    def get_table(self) -> pd.DataFrame:
+        results = {
+            scenario_name: self.impact_model.get_nodes_scores(
+                **scenario_params, by_property=self.by_property
+            )
+            for scenario_name, scenario_params in self.scenarios_parameters.items()
+        }
+        results = {
+            scenario_name: pd.concat(
+                [node_data.to_unpivoted_df() for node_data in scenario_results]
+            )
+            for scenario_name, scenario_results in results.items()
+        }
+        results = pd.concat(
+            [
+                pd.DataFrame({"scenario_name": scenario_name, **scenario_results})
+                for scenario_name, scenario_results in results.items()
+            ]
+        )
+        return results
+
+    def get_figure(self, table: pd.DataFrame, save: bool = False):
+        fig = px.bar(
+            table, x="scenario_name", y="score", color="name", facet_row="method"
+        )
+        if save:
+            self.save_figure(fig)
+        return fig

@@ -39,8 +39,8 @@ parameters:
       Maxwell: 0.0878*cuda_core*1000/(90*3600)
       Pascal: 0.0679*cuda_core*1000/(90*3600)
   type: float
-  min: null
-  max: null
+  min: 0.06
+  max: 1.11
   distrib: linear
   pm: null
   pm_perc: 0.2
@@ -55,8 +55,8 @@ parameters:
 - name: lifespan
   default: 2.0
   type: float
-  min: null
-  max: null
+  min: 2
+  max: 2
   distrib: linear
   pm: 1.0
   pm_perc: null
@@ -85,7 +85,7 @@ tree:
       EFV3_CLIMATE_CHANGE: 1.0*energy_per_inference*inference_per_day*lifespan*(7.560675e-5*usage_location_EU
         + 1.7532e-5*usage_location_FR)
     children: []
-    properties: {}
+    properties: {"phase": "use"}
     amount: '1.0'
   - name: nvidia_gpu_chip_manufacturing
     models:
@@ -99,7 +99,7 @@ tree:
         + 21.707425626610416) - 471.2385*sqrt(2)/sqrt(0.13184623155305694*cuda_core
         + 21.707425626610416)))
     children: []
-    properties: {}
+    properties: {"phase": "manufacturing"}
     amount: '1.0'
   properties: {}
   amount: '1.0'

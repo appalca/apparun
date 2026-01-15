@@ -27,17 +27,21 @@ dependencies = [
     "aenum",
     "pydantic",
     "pyyaml==6.0.1",
-    "sympy==1.12",
+    "sympy==1.14.0",
+    "scipy==1.16.2",
     "numpy==1.26.4",
     "pandas==2.3.3",
+    "pytest==8.4.2",
     "typer==0.15.1",
-    "plotly",
-    "fastapi",
+    "plotly==6.3.1",
+    "fastapi==0.120.1",
     "uvicorn[standard]",
-    "kaleido<=0.1.0.post1",
-    "SALib",
+    "kaleido==1.2.0",
+    "SALib==1.5.1",
+    "hatchling==1.27.0",
     "click==8.1.8",
-    "networkx==3.4.2"
+    "networkx==3.4.2",
+    "streamlit==1.52.2"
 ]
 
 [project.scripts]
