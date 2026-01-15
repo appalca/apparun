@@ -14,7 +14,7 @@ from apparun.score import LCIAScores
 from apparun.tree_node import NodeProperties, NodeScores
 
 """
-Python script to demonstrate the use of to_normalisation(), to_weighting(), and
+Python script to demonstrate the use of to_normalised(), to_weighted(), and
 to_unique_score() functions.
 Demonstration on hardcoded LCIAScores impact values, but all functions can be
 applied to ImpactModel.get_scores() or ImpactModel.get_nodes_scores() LCIAScores
@@ -45,19 +45,19 @@ score_init.scores = {
 print(score_init.to_unpivoted_df())
 
 # Apply normalisation with default normalisation factor method -> using PEF3.0 available normalisation factors
-score = score_init.to_normalisation()
+score = score_init.to_normalised()
 # Apply weighting with weighting factors from file 'apparun/resources/pef30/weighting_factor.csv'
-score = score.to_weighting(fileweight="apparun/resources/pef30/weighting_factor.csv")
+score = score.to_weighted(fileweight="apparun/resources/pef30/weighting_factor.csv")
 # Sup all impact category scores
 score = score.to_unique_score()
 print(score.to_unpivoted_df())
 
-# 3 previous functions can be called with only to_unique_score() specifying isNorm and isWeight to True
+# 3 previous functions can be called with only to_unique_score() specifying is_normalised and is_weighted to True
 # Apply normalisation with normalisation EF30 factor method (EF31 also available)
 # Apply weighting with weighting factors from file 'apparun/resources/pef30/weighting_factor.csv'
 unique_score = score_init.to_unique_score(
-    isNorm=True,
-    isWeight=True,
+    is_normalised=True,
+    is_weighted=True,
     method=MethodUniqueScore.EF30,
     fileweight="apparun/resources/pef30/weighting_factor.csv",
 )
@@ -138,7 +138,7 @@ node_scores = [
 # If no fileweight/filenorm specified, method applied to both weighting and normalisation
 # Apply default EF30 method for normalisation and weighting
 unique_node_scores = [
-    score_model_node.to_unique_score(isNorm=True, isWeight=True)
+    score_model_node.to_unique_score(is_normalised=True, is_weighted=True)
     for score_model_node in node_scores
 ]
 

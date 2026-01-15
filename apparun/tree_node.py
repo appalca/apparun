@@ -122,7 +122,7 @@ class NodeScores(BaseModel):
         df["parent"] = self.parent
         return df
 
-    def to_normalisation(
+    def to_normalised(
         self,
         method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
         filenorm: Optional[str] = None,
@@ -131,13 +131,13 @@ class NodeScores(BaseModel):
             name=self.name,
             parent=self.parent,
             properties=self.properties,
-            lcia_scores=self.lcia_scores.to_normalisation(
+            lcia_scores=self.lcia_scores.to_normalised(
                 method=method, filenorm=filenorm
             ),
         )
         return score
 
-    def to_weighting(
+    def to_weighted(
         self,
         method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
         fileweight: Optional[str] = None,
@@ -146,7 +146,7 @@ class NodeScores(BaseModel):
             name=self.name,
             parent=self.parent,
             properties=self.properties,
-            lcia_scores=self.lcia_scores.to_weighting(
+            lcia_scores=self.lcia_scores.to_weighted(
                 method=method, fileweight=fileweight
             ),
         )
@@ -154,8 +154,8 @@ class NodeScores(BaseModel):
 
     def to_unique_score(
         self,
-        isNorm: Optional[bool] = False,
-        isWeight: Optional[bool] = False,
+        is_normalised: Optional[bool] = False,
+        is_weighted: Optional[bool] = False,
         method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
         filenorm: Optional[str] = None,
         fileweight: Optional[str] = None,
@@ -165,8 +165,8 @@ class NodeScores(BaseModel):
             parent=self.parent,
             properties=self.properties,
             lcia_scores=self.lcia_scores.to_unique_score(
-                isNorm=isNorm,
-                isWeight=isWeight,
+                is_normalised=is_normalised,
+                is_weighted=is_weighted,
                 method=method,
                 filenorm=filenorm,
                 fileweight=fileweight,

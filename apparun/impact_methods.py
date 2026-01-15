@@ -130,6 +130,9 @@ class MethodShortName(str, Enum):
 
 
 class MethodUniqueScore(str, Enum):
+    """
+    PEF methods to apply normalisation and weighting to scores.
+    """
     EF30 = "apparun/resources/pef30/"
     EF31 = "apparun/resources/pef31/"
 

@@ -35,15 +35,16 @@ class LCIAScores(BaseModel):
         df = pd.melt(df, var_name="method", value_name="score")
         return df
 
-    def to_normalisation(
+    def to_normalised(
         self,
         method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
         filenorm: Optional[str] = None,
     ) -> LCIAScores:
         """
         Computes normalisation of LCIAScores using .csv file with impact categories and normalisation factors.
-        :param: method -> allows to use default MethodUniqueScore.EF30 or EF31 normalisation factors.
-        :param: filenorm -> allows to give a personal .csv file with normalisation factors.
+        :param: method: allows to use default MethodUniqueScore.EF30 or EF31 normalisation factors.
+        :param: filenorm: allows to give a personal .csv file with normalisation factors.
+        :return: LCIAScores after normalisation.
         """
         if filenorm is None:
             filenorm = method.path_to_norm()
@@ -64,15 +65,16 @@ class LCIAScores(BaseModel):
 
         return LCIAScores(scores=score.scores)
 
-    def to_weighting(
+    def to_weighted(
         self,
         method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
         fileweight: Optional[str] = None,
     ) -> LCIAScores:
         """
         Computes normalisation of LCIAScores using .csv file with impact categories and normalisation factors.
-        :param: method -> allows to use default MethodUniqueScore.EF30 or EF31 weighting factors.
-        :param: fileweight -> allows to give a personal .csv file with weighting factors.
+        :param: method: allows to use default MethodUniqueScore.EF30 or EF31 weighting factors.
+        :param: fileweight: allows to give a personal .csv file with weighting factors.
+        :return: LCIAScores after normalisation.
         """
         if fileweight is None:
             fileweight = method.path_to_weight()
@@ -96,8 +98,8 @@ class LCIAScores(BaseModel):
 
     def to_unique_score(
         self,
-        isNorm: Optional[bool] = False,
-        isWeight: Optional[bool] = False,
+        is_normalised: Optional[bool] = False,
+        is_weighted: Optional[bool] = False,
         method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
         filenorm: Optional[str] = None,
         fileweight: Optional[str] = None,
@@ -105,17 +107,17 @@ class LCIAScores(BaseModel):
         """
         Computes sum of LCIAScores impact category scores into unique score. Possible to apply normalisation
         and/or weighting before aggregating scores.
-        :param: isNorm = True -> apply normalisation before sum into unique score.
-        :param: isWeight = True -> apply weighting (after normalisation) before sum into unique score.
-        :param: method -> allows to use default MethodUniqueScore.EF30 or EF31 normalisation and weighting factors.
-        :param: filenorm -> allows to give a personal .csv file with normalisation factors.
-        :param: fileweight -> allows to give a personal .csv file with weighting factors.
+        :param: is_normalised: if True, apply normalisation before sum into unique score.
+        :param: is_weighted: if True, apply weighting (after normalisation) before sum into unique score.
+        :param: method: allows to use default MethodUniqueScore.EF30 or EF31 normalisation and weighting factors.
+        :param: filenorm: allows to give a personal .csv file with normalisation factors.
+        :param: fileweight: allows to give a personal .csv file with weighting factors.
         """
         score = LCIAScores(scores=self.scores.copy())
-        if isNorm is not False:
-            score = score.to_normalisation(method=method, filenorm=filenorm)
-        if isWeight is not False:
-            score = score.to_weighting(method=method, fileweight=fileweight)
+        if is_normalised is not False:
+            score = score.to_normalised(method=method, filenorm=filenorm)
+        if is_weighted is not False:
+            score = score.to_weighted(method=method, fileweight=fileweight)
 
         sum_score = [sum(x) for x in zip(*score.scores.values())]
         unique_score = {"UNIQUE_SCORE": sum_score}
