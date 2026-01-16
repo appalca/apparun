@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Set, Union
 import pandas as pd
 from pydantic import BaseModel
 
+from apparun.impact_methods import MethodUniqueScore
 from apparun.score import LCIAScores
 
 
@@ -120,3 +121,55 @@ class NodeScores(BaseModel):
         df["name"] = self.name
         df["parent"] = self.parent
         return df
+
+    def to_normalised(
+        self,
+        method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
+        filenorm: Optional[str] = None,
+    ) -> NodeScores:
+        score = NodeScores(
+            name=self.name,
+            parent=self.parent,
+            properties=self.properties,
+            lcia_scores=self.lcia_scores.to_normalised(
+                method=method, filenorm=filenorm
+            ),
+        )
+        return score
+
+    def to_weighted(
+        self,
+        method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
+        fileweight: Optional[str] = None,
+    ) -> NodeScores:
+        score = NodeScores(
+            name=self.name,
+            parent=self.parent,
+            properties=self.properties,
+            lcia_scores=self.lcia_scores.to_weighted(
+                method=method, fileweight=fileweight
+            ),
+        )
+        return score
+
+    def to_unique_score(
+        self,
+        is_normalised: Optional[bool] = False,
+        is_weighted: Optional[bool] = False,
+        method: Optional[MethodUniqueScore] = MethodUniqueScore.EF30,
+        filenorm: Optional[str] = None,
+        fileweight: Optional[str] = None,
+    ) -> NodeScores:
+        score = NodeScores(
+            name=self.name,
+            parent=self.parent,
+            properties=self.properties,
+            lcia_scores=self.lcia_scores.to_unique_score(
+                is_normalised=is_normalised,
+                is_weighted=is_weighted,
+                method=method,
+                filenorm=filenorm,
+                fileweight=fileweight,
+            ),
+        )
+        return score

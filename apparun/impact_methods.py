@@ -127,3 +127,18 @@ class MethodShortName(str, Enum):
         :return: full name version of short impact name.
         """
         return MethodFullName[self.name]
+
+
+class MethodUniqueScore(str, Enum):
+    """
+    PEF methods to apply normalisation and weighting to scores.
+    """
+
+    EF30 = "apparun/resources/pef30/"
+    EF31 = "apparun/resources/pef31/"
+
+    def path_to_norm(self) -> str:
+        return self.value + "normalisation_factor.csv"
+
+    def path_to_weight(self) -> str:
+        return self.value + "weighting_factor.csv"
