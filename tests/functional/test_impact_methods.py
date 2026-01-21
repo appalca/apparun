@@ -3,6 +3,7 @@ import math
 import pytest
 
 from apparun.exceptions import InvalidFileError
+from apparun.impact_methods import MethodFullName, MethodShortName, MethodUniqueScore
 from apparun.impact_model import ImpactModel
 
 
@@ -14,6 +15,11 @@ def impact_model_16():
 @pytest.fixture()
 def impact_model_5():
     return ImpactModel.from_yaml("tests/data/impact_models/5_indicator_model.yaml")
+
+
+@pytest.fixture()
+def impact_model_5_ef31():
+    return ImpactModel.from_yaml("tests/data/impact_models/5_indicator_model_ef31.yaml")
 
 
 def test_unique_score_exception(impact_model_16):
@@ -54,17 +60,29 @@ def test_unique_score_exception(impact_model_16):
         )
 
 
-def test_unique_score_values(impact_model_5):
+def test_unique_score_values(impact_model_5, impact_model_5_ef31):
     try:
-        score = impact_model_5.get_scores().to_unique_score(
-            is_normalised=True, is_weighted=True
+        score_30 = impact_model_5.get_scores().to_unique_score(
+            method=MethodUniqueScore.EF30, is_normalised=True, is_weighted=True
         )
     except Exception:
         pytest.fail(
             "Valid factors / reduced number of impact cat. in model must not raise any exception"
         )
-
-    assert math.isclose(score.scores.get("UNIQUE_SCORE")[0], 0.00361857, abs_tol=1e-6)
+    try:
+        score_31 = impact_model_5_ef31.get_scores().to_unique_score(
+            method=MethodUniqueScore.EF31, is_normalised=True, is_weighted=True
+        )
+    except Exception:
+        pytest.fail(
+            "Valid factors / reduced number of impact cat. in model must not raise any exception"
+        )
+    assert math.isclose(
+        score_30.scores.get("UNIQUE_SCORE")[0], 0.00361857, abs_tol=1e-6
+    )
+    assert math.isclose(
+        score_31.scores.get("UNIQUE_SCORE")[0], 0.00344846, abs_tol=1e-6
+    )
 
 
 def test_unique_score_values_multi_param(impact_model_5):
@@ -150,3 +168,9 @@ def test_unique_node_score_values_multi_param(impact_model_5):
         0.00361857,
         abs_tol=1e-6,
     )
+
+
+def test_impact_methods_consistency():
+    assert {elem.name for elem in MethodFullName} == {
+        elem.name for elem in MethodShortName
+    }
