@@ -102,7 +102,7 @@ class MethodShortName(str, Enum):
     """
     Short version of impact methods supported by Brightway, to ease readability of
     figures.
-    So far, only some ReCiPe methods, and all EF v3.0 impact methods are supported.
+    So far, only EF v3.0 and EF v3.1 impact methods are supported.
     """
 
     _settings_ = NoAlias
