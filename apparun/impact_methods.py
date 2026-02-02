@@ -52,43 +52,43 @@ class MethodFullName(str, Enum):
     EFV3_WATER_USE = "('EF v3.0', 'water use', 'user deprivation potential (deprivation-weighted water consumption)')"
 
     # EF31
-    EFV31_ACIDIFICATION = "(‘EF v3.1‘, ‘acidification‘, ‘accumulated exceedance (AE)‘)"
+    EFV31_ACIDIFICATION = "('EF v3.1', 'acidification', 'accumulated exceedance (AE)')"
     EFV31_CLIMATE_CHANGE = (
-        "(‘EF v3.1‘, ‘climate change‘, ‘global warming potential (GWP100)‘)"
+        "('EF v3.1', 'climate change', 'global warming potential (GWP100)')"
     )
     EFV31_CLIMATE_CHANGE_BIOGENIC = (
-        "(‘EF v3.1‘, ‘climate change: biogenic‘, ‘global warming potential (GWP100)‘)"
+        "('EF v3.1', 'climate change: biogenic', 'global warming potential (GWP100)')"
     )
     EFV31_CLIMATE_CHANGE_FOSSIL = (
-        "(‘EF v3.1‘, ‘climate change: fossil‘, ‘global warming potential (GWP100)‘)"
+        "('EF v3.1', 'climate change: fossil', 'global warming potential (GWP100)')"
     )
-    EFV31_CLIMATE_CHANGE_LAND_USE = "(‘EF v3.1‘, ‘climate change: land use and land use change‘, ‘global warming potential (GWP100)‘)"
-    EFV31_ECOTOXICITY_FRESHWATER = "(‘EF v3.1‘, ‘ecotoxicity: freshwater‘, ‘comparative toxic unit for ecosystems (CTUe)‘)"
-    EFV31_ECOTOXICITY_FRESHWATER_INORGANICS = "(‘EF v3.1‘, ‘ecotoxicity: freshwater, inorganics‘, ‘comparative toxic unit for ecosystems (CTUe)‘)"
-    EFV31_ECOTOXICITY_FRESHWATER_ORGANICS = "(‘EF v3.1‘, ‘ecotoxicity: freshwater, organics‘, ‘comparative toxic unit for ecosystems (CTUe)‘)"
-    EFV31_ENERGY_RESOURCES = "(‘EF v3.1‘, ‘energy resources: non-renewable‘, ‘abiotic depletion potential (ADP): fossil fuels‘)"
-    EFV31_EUTROPHICATION_FRESHWATER = "(‘EF v3.1‘, ‘eutrophication: freshwater‘, ‘fraction of nutrients reaching freshwater end compartment (P)‘)"
-    EFV31_EUTROPHICATION_MARINE = "(‘EF v3.1‘, ‘eutrophication: marine‘, ‘fraction of nutrients reaching marine end compartment (N)‘)"
+    EFV31_CLIMATE_CHANGE_LAND_USE = "('EF v3.1', 'climate change: land use and land use change', 'global warming potential (GWP100)')"
+    EFV31_ECOTOXICITY_FRESHWATER = "('EF v3.1', 'ecotoxicity: freshwater', 'comparative toxic unit for ecosystems (CTUe)')"
+    EFV31_ECOTOXICITY_FRESHWATER_INORGANICS = "('EF v3.1', 'ecotoxicity: freshwater, inorganics', 'comparative toxic unit for ecosystems (CTUe)')"
+    EFV31_ECOTOXICITY_FRESHWATER_ORGANICS = "('EF v3.1', 'ecotoxicity: freshwater, organics', 'comparative toxic unit for ecosystems (CTUe)')"
+    EFV31_ENERGY_RESOURCES = "('EF v3.1', 'energy resources: non-renewable', 'abiotic depletion potential (ADP): fossil fuels')"
+    EFV31_EUTROPHICATION_FRESHWATER = "('EF v3.1', 'eutrophication: freshwater', 'fraction of nutrients reaching freshwater end compartment (P)')"
+    EFV31_EUTROPHICATION_MARINE = "('EF v3.1', 'eutrophication: marine', 'fraction of nutrients reaching marine end compartment (N)')"
     EFV31_EUTROPHICATION_TERRESTRIAL = (
-        "(‘EF v3.1‘, ‘eutrophication: terrestrial‘, ‘accumulated exceedance (AE)‘)"
+        "('EF v3.1', 'eutrophication: terrestrial', 'accumulated exceedance (AE)')"
     )
-    EFV31_HUMAN_TOXICITY_CARCINOGENIC = "(‘EF v3.1‘, ‘human toxicity: carcinogenic‘, ‘comparative toxic unit for human (CTUh)‘)"
-    EFV31_HUMAN_TOXICITY_CARCINOGENIC_INORGANICS = "(‘EF v3.1‘, ‘human toxicity: carcinogenic, inorganics‘, ‘comparative toxic unit for human (CTUh)‘)"
-    EFV31_HUMAN_TOXICITY_CARCINOGENIC_ORGANICS = "(‘EF v3.1‘, ‘human toxicity: carcinogenic, organics‘, ‘comparative toxic unit for human (CTUh)‘)"
-    EFV31_HUMAN_TOXICITY_NON_CARCINOGENIC = "(‘EF v3.1‘, ‘human toxicity: non-carcinogenic‘, ‘comparative toxic unit for human (CTUh)‘)"
-    EFV31_HUMAN_TOXICITY_NON_CARCINOGENIC_INORGANICS = "(‘EF v3.1‘, ‘human toxicity: non-carcinogenic, inorganics‘, ‘comparative toxic unit for human (CTUh)‘)"
-    EFV31_HUMAN_TOXICITY_NON_CARCINOGENIC_ORGANICS = "(‘EF v3.1‘, ‘human toxicity: non-carcinogenic, organics‘, ‘comparative toxic unit for human (CTUh)‘)"
-    EFV31_IONISING_RADIATION = "(‘EF v3.1‘, ‘ionising radiation: human health‘, ‘human exposure efficiency relative to u235‘)"
-    EFV31_LAND_USE = "(‘EF v3.1‘, ‘land use‘, ‘soil quality index‘)"
-    EFV31_MATERIAL_RESOURCES = "(‘EF v3.1‘, ‘material resources: metals/minerals‘, ‘abiotic depletion potential (ADP): elements (ultimate reserves)‘)"
+    EFV31_HUMAN_TOXICITY_CARCINOGENIC = "('EF v3.1', 'human toxicity: carcinogenic', 'comparative toxic unit for human (CTUh)')"
+    EFV31_HUMAN_TOXICITY_CARCINOGENIC_INORGANICS = "('EF v3.1', 'human toxicity: carcinogenic, inorganics', 'comparative toxic unit for human (CTUh)')"
+    EFV31_HUMAN_TOXICITY_CARCINOGENIC_ORGANICS = "('EF v3.1', 'human toxicity: carcinogenic, organics', 'comparative toxic unit for human (CTUh)')"
+    EFV31_HUMAN_TOXICITY_NON_CARCINOGENIC = "('EF v3.1', 'human toxicity: non-carcinogenic', 'comparative toxic unit for human (CTUh)')"
+    EFV31_HUMAN_TOXICITY_NON_CARCINOGENIC_INORGANICS = "('EF v3.1', 'human toxicity: non-carcinogenic, inorganics', 'comparative toxic unit for human (CTUh)')"
+    EFV31_HUMAN_TOXICITY_NON_CARCINOGENIC_ORGANICS = "('EF v3.1', 'human toxicity: non-carcinogenic, organics', 'comparative toxic unit for human (CTUh)')"
+    EFV31_IONISING_RADIATION = "('EF v3.1', 'ionising radiation: human health', 'human exposure efficiency relative to u235')"
+    EFV31_LAND_USE = "('EF v3.1', 'land use', 'soil quality index')"
+    EFV31_MATERIAL_RESOURCES = "('EF v3.1', 'material resources: metals/minerals', 'abiotic depletion potential (ADP): elements (ultimate reserves)')"
     EFV31_OZONE_DEPLETION = (
-        "(‘EF v3.1‘, ‘ozone depletion‘, ‘ozone depletion potential (ODP)‘)"
+        "('EF v3.1', 'ozone depletion', 'ozone depletion potential (ODP)')"
     )
     EFV31_PARTICULATE_MATTER_FORMATION = (
-        "(‘EF v3.1‘, ‘particulate matter formation‘, ‘impact on human health‘)"
+        "('EF v3.1', 'particulate matter formation', 'impact on human health')"
     )
-    EFV31_PHOTOCHEMICAL_OZONE_FORMATION = "(‘EF v3.1‘, ‘photochemical oxidant formation: human health‘, ‘tropospheric ozone concentration increase‘)"
-    EFV31_WATER_USE = "(‘EF v3.1‘, ‘water use‘, ‘user deprivation potential (deprivation-weighted water consumption)‘)"
+    EFV31_PHOTOCHEMICAL_OZONE_FORMATION = "('EF v3.1', 'photochemical oxidant formation: human health', 'tropospheric ozone concentration increase')"
+    EFV31_WATER_USE = "('EF v3.1', 'water use', 'user deprivation potential (deprivation-weighted water consumption)')"
 
     def to_short_name(self) -> MethodShortName:
         """
