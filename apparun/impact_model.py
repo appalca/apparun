@@ -8,9 +8,10 @@ from pydantic import BaseModel, ValidationError
 from SALib.analyze import sobol
 from yaml import YAMLError
 
+from apparun.expressions import ImpactModelParamsValues
 from apparun.impact_tree import ImpactTreeNode
 from apparun.logger import logger
-from apparun.parameters import ImpactModelParams, ImpactModelParamsValues
+from apparun.parameters import ImpactModelParams
 from apparun.score import LCIAScores
 from apparun.tree_node import NodeScores
 
@@ -257,6 +258,29 @@ class ImpactModel(BaseModel):
             scores = NodeScores.combine_by_property(scores, by_property)
         logger.info("Nodes scores computed with no error")
         return scores
+
+    def get_node_scores(
+        self,
+        node_name: str = None,
+        direct_impacts: Optional[bool] = False,
+        **params,
+    ) -> NodeScores:
+        """
+        Get impact scores of one specific node for each impact method, according to the
+        parameters.
+        :param node_name: targeted node's name
+        :param direct_impacts: if True, direct_impacts will be computed instead of
+        full impacts (i.e. sum of direct impacts and children direct impacts)
+        :param params: value, or list of values of the impact model's parameters.
+        List of values must have the same length. If single values are provided
+        alongside a list of values, it will be duplicated to the appropriate length.
+        :return: a list of dict mapping impact names and corresponding score, or list
+        of scores, for each node/property value.
+        """
+        nodes_scores = self.get_nodes_scores(direct_impacts=direct_impacts, **params)
+        return [
+            node_score for node_score in nodes_scores if node_score.name == node_name
+        ][0]
 
     def get_uncertainty_nodes_scores(self, n) -> List[NodeScores]:
         """ """
