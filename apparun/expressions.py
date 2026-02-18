@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Self, Union
 import networkx as nx
 import numpy
 import sympy
-from bw2parameters.errors import ParameterError
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
 from pydantic_core import PydanticCustomError
 from pydantic_core.core_schema import ValidationInfo
