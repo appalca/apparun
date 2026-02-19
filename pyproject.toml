@@ -7,7 +7,7 @@ packages = ["apparun"]
 
 [project]
 name = "apparun"
-version = "0.4.1"
+version = "0.4.2"
 authors = [{ name = "Maxime Peralta", email = "maxime.peralta@cea.fr"}]
 maintainers= [{name = "Maxime Peralta", email = "maxime.peralta@cea.fr"}]
 description = "Appa Run is a package to execute impact models produced by Appa Build"
@@ -22,7 +22,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
 ]
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11"
 dependencies = [
     "aenum",
     "pydantic",
