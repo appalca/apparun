@@ -11,6 +11,65 @@ from apparun.results import ImpactModelResult
 ACTION_ADD = "add"
 ACTION_CLEAR = "clear"
 
+INPUT_PANELS = {}
+OUTPUT_PANELS = {}
+
+
+def register_panel(panel_type: str):
+    """
+    This decorator registers a new Panel class in PANELS registry.
+    :param panel_type: new Panel's type name
+    :return: new Panel class
+    """
+
+    def decorator(decorated_class):
+        if issubclass(decorated_class, OutputPanel):
+            if panel_type not in OUTPUT_PANELS:
+                OUTPUT_PANELS[panel_type] = decorated_class
+            return decorated_class
+        if issubclass(decorated_class, InputPanel):
+            if panel_type not in INPUT_PANELS:
+                INPUT_PANELS[panel_type] = decorated_class
+            return decorated_class
+        msg = f"Custom panel {panel_type} must inherit from InputPanel or OutputPanel."
+        raise TypeError(msg)
+
+    return decorator
+
+
+def get_input_panel(panel_type: str):
+    """
+    Get a registered InputPanel class by type.
+    :param panel_type: type of the desired input panel.
+    :return: registered InputPanel class corresponding to the type.
+    """
+    return INPUT_PANELS[panel_type]
+
+
+def get_output_panel(panel_type: str):
+    """
+    Get a registered OutputPanel class by type.
+    :param panel_type: type of the desired output panel.
+    :return: registered OutputPanel class corresponding to the type.
+    """
+    return OUTPUT_PANELS[panel_type]
+
+
+def registered_input_panels() -> List[str]:
+    """
+    Get a list of registered InputPanel types.
+    :return: list of registered InputPanel types.
+    """
+    return list(INPUT_PANELS.keys())
+
+
+def registered_output_panels() -> List[str]:
+    """
+    Get a list of registered OutputPanel types.
+    :return: list of registered OutputPanel types.
+    """
+    return list(OUTPUT_PANELS.keys())
+
 
 class Panel(BaseModel):
     _state: Dict[Any, Any] = {}
@@ -76,8 +135,9 @@ class InputPanel(Panel):
         return
 
 
+@register_panel("input_scenario_form_panel")
 class InputScenarioFormPanel(InputPanel):
-    fields: List[Dict[str, Any]]
+    fields: Optional[List[Dict[str, Any]]] = []
     type: Literal["input_scenario_form_panel"]
 
     def __init__(self, **args):

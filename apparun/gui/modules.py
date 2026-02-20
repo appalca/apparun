@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 import subprocess
-from typing import Annotated, Callable, List, Optional, TypeVar, Union
+from typing import Annotated, Any, Callable, Dict, List, Optional, TypeVar, Union
 
 import pandas as pd
 import streamlit as st
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
-from apparun.gui.panels.base import InputScenarioFormPanel
-from apparun.gui.panels.output_dynamic import ScenarioComparisonDynamicOutputPanel
-from apparun.gui.panels.output_static import Markdown
+from apparun.gui.panels.base import *
+from apparun.gui.panels.base import (
+    InputPanel,
+    OutputPanel,
+    get_input_panel,
+    get_output_panel,
+)
+from apparun.gui.panels.output_dynamic import *
+from apparun.gui.panels.output_static import *
 from apparun.impact_model import ImpactModel
 
 PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
@@ -19,18 +25,28 @@ class Module(BaseModel):
     name: Optional[str] = None
     lca_data_path: Optional[str] = None
     impact_model_path: Optional[str] = None
-    input_panel: Optional[
-        Annotated[InputScenarioFormPanel, Field(discriminator="type")]
-    ] = None
-    output_panels: List[
-        Annotated[
-            Union[ScenarioComparisonDynamicOutputPanel, Markdown],
-            Field(discriminator="type"),
-        ]
-    ]
+    input_panel: Optional[InputPanel] = None
+    output_panels: List[OutputPanel]
     cols: Optional[Callable] = None
     lca_data: Optional[PandasDataFrame] = None
     impact_model: Optional[ImpactModel] = None
+
+    @field_validator("input_panel", mode="before")
+    @classmethod
+    def build_input_panel(
+        cls, panel: Optional[Dict[Any]] = None
+    ) -> Optional[InputPanel]:
+        if panel is None:
+            return None
+        return get_input_panel(panel["type"])(**panel)
+
+    @field_validator("output_panels", mode="before")
+    @classmethod
+    def build_output_panels(cls, panels: List[Dict[Any]]) -> List[OutputPanel]:
+        return [
+            get_output_panel(output_panel["type"])(**output_panel)
+            for output_panel in panels
+        ]
 
     def __init__(self, **args):
         super().__init__(**args)

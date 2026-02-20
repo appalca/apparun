@@ -1,0 +1,20 @@
+name: "GUI with custom panels"
+modules:
+  - name: "Rude markdown"
+    output_panels:
+      - type: markdown
+        message: "This is using a panel built in Appa Run."
+  - name: "Polite markdown"
+    output_panels:
+      - type: polite_markdown
+        message: "This is using a panel built in an external script."
+  - name: "Scenario comparison by phase"
+    impact_model_path: "samples/impact_models/nvidia_ai_gpu_chip.yaml"
+    input_panel:
+      type: input_scenario_from_file_panel
+      name: "GPU parameters"
+    output_panels:
+      - type: batch_scenario_comparison_dynamic_output_panel
+        y: EFV3_CLIMATE_CHANGE
+        hue: phase
+        by_property: "phase"
