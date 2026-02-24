@@ -64,11 +64,7 @@ class ModelMetadata(BaseModel):
         metadata.
         :return: constructed model metadata.
         """
-        return ModelMetadata(
-            author=LcaPractitioner(**model_metadata["author"]),
-            reviewer=LcaPractitioner(**model_metadata["reviewer"]),
-            report=LcaStudy(**model_metadata["report"]),
-        )
+        return ModelMetadata(**model_metadata)
 
 
 class ImpactModel(BaseModel):
