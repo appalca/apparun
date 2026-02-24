@@ -48,7 +48,7 @@ def validate_expr(expr: str) -> bool:
     """
     tokens_patterns = {
         "FUN_ID": r"\w+\b(?=\()",
-        "ID": r"[a-zA-Z_]+",
+        "ID": r"[a-zA-Z_]+[a-zA-Z_0-9]*",
         "NUMBER": r"\-?\d+(\.\d+(e\-?\d+)?)?",
         "L_PAREN": r"\(",
         "R_PAREN": r"\)",
