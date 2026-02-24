@@ -33,6 +33,10 @@ def test_valid_exprs():
       + 21.707425626610416) - 101.14318001667067*sqrt(2)/sqrt(0.0060737847877931227*cuda_core
       + 1))) + 0.00036525*energy_per_inference*inference_per_day*lifespan*(0.005*usage_location_EU
       + 0.021*usage_location_FR)""",
+        "3*a",
+        "3*a_",
+        "3*a_1",
+        "3*_a1",
     ]
 
     for expr in exprs:
@@ -56,6 +60,7 @@ def test_invalid_exprs():
         "exp(1 x 2)",
         "log2(1 x 2)",
         "custom_function(1)",
+        "3*1_a",
     ]
 
     for expr in exprs:
