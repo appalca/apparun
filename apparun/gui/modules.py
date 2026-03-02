@@ -93,7 +93,9 @@ class Module(BaseModel):
         else:
             with self.output_col:
                 for output_panel in self.output_panels:
-                    output_panel.run()
+                    output_panel.run(
+                        impact_model=self.impact_model, lca_data=self.lca_data
+                    )
 
 
 class GUI(BaseModel):

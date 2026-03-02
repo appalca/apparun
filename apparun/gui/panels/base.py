@@ -119,7 +119,7 @@ class DynamicOutputPanel(OutputPanel):
 class StaticOutputPanel(OutputPanel):
     type: Literal["static_output_panel"]
 
-    def run(self):
+    def run(self, impact_model: ImpactModel = None, lca_data: pd.DataFrame = None):
         return
 
 

@@ -20,7 +20,7 @@ class PoliteMarkdown(StaticOutputPanel):
     type: Literal["polite_markdown"]
     message: str
 
-    def run(self):
+    def run(self, impact_model: ImpactModel = None, lca_data: pd.DataFrame = None):
         st.markdown(f"{self.message}\n\nKind regards.")
 
 
