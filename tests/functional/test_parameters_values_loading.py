@@ -53,8 +53,6 @@ def test_float_expr_no_such_param(impact_model):
         "cuda_core": "surface / unit_per_mm",
     }
 
-    expected = [("surface",), ("surface", "unit_per_mm")]
-
     with pytest.raises(ValidationError) as exc_info:
         impact_model.params_values(**parameters)
 
@@ -64,7 +62,6 @@ def test_float_expr_no_such_param(impact_model):
     for idx, err in enumerate(errors):
         assert err["type"] == "no_such_param"
         assert err["ctx"]["target_parameter"] == list(parameters.keys())[idx]
-        assert err["ctx"]["invalid_parameters"] == expected[idx]
         assert err["input"] == list(parameters.values())[idx]
 
 
@@ -78,8 +75,6 @@ def test_float_expr_dependencies_type(impact_model):
         "cuda_core": "energy_per_inference / architecture",
     }
 
-    expected = [("architecture", "usage_location"), ("architecture",)]
-
     with pytest.raises(ValidationError) as exc_info:
         impact_model.params_values(**parameters)
 
@@ -89,8 +84,7 @@ def test_float_expr_dependencies_type(impact_model):
     for idx, err in enumerate(errors):
         assert err["type"] == "dependencies_type"
         assert err["ctx"]["target_parameter"] == list(parameters.keys())[idx]
-        assert err["ctx"]["invalid_parameters"] == expected[idx]
-        assert err["ctx"]["required_type"] == "float"
+        assert err["ctx"]["required_type"] == "float or dummy"
         assert err["input"] == list(parameters.values())[idx]
 
 

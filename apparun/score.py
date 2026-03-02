@@ -25,6 +25,9 @@ class LCIAScores(BaseModel):
         """
         return set(self.scores.keys())
 
+    def __getitem__(self, method_name: str):
+        return self.scores[method_name]
+
     def to_unpivoted_df(self) -> pd.DataFrame:
         if isinstance(list(self.scores.values())[0], float) or isinstance(
             list(self.scores.values())[0], float
