@@ -1,0 +1,3 @@
+lifespan: 3
+architecture: Maxwell
+cuda_core: 2048
