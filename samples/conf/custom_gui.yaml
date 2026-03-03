@@ -1,4 +1,5 @@
 name: "GUI with custom panels"
+favicon_path: "https://www.cea.fr/PublishingImages/cea.jpg"
 modules:
   - name: "Rude markdown"
     output_panels:

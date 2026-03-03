@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import io
+import re
 import subprocess
 from typing import Annotated, Any, Callable, Dict, List, Optional, TypeVar, Union
 
 import pandas as pd
+import requests
 import streamlit as st
+from PIL import Image
 from pydantic import BaseModel, Field, field_validator
 
 from apparun.gui.panels.base import *
@@ -100,9 +104,19 @@ class Module(BaseModel):
 
 class GUI(BaseModel):
     name: Optional[str] = None
+    favicon_path: Optional[str] = None
     modules: List[Module]
 
     def setup_layout(self):
+        favicon = None
+        if self.favicon_path is not None:
+            if re.match(r"https?://.*", self.favicon_path):
+                favicon = Image.open(
+                    io.BytesIO(requests.get(self.favicon_path, stream=True).content)
+                )
+            else:
+                favicon = Image.open(self.favicon_path)
+        st.set_page_config(page_title=self.name, page_icon=favicon)
         st.html(
             """
             <style>

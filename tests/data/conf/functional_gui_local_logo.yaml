@@ -1,5 +1,5 @@
 name: "Preconfigured tool for NVIDIA AI GPU"
-favicon_path: "https://www.cea.fr/PublishingImages/cea.jpg"
+favicon_path: "tests/data/cea.jpg"
 modules:
   - name: "Random explanation"
     output_panels:
