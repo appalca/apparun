@@ -1,4 +1,5 @@
 name: "Preconfigured tool for NVIDIA AI GPU"
+favicon_path: "https://www.cea.fr/PublishingImages/cea.jpg"
 modules:
   - impact_model_path: "samples/impact_models/nvidia_ai_gpu_chip.yaml"
     name: "Scenario comparison by phase"

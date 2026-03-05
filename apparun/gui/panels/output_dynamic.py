@@ -3,11 +3,17 @@ from typing import Literal, Optional
 import pandas as pd
 import streamlit as st
 
-from apparun.gui.panels.base import ACTION_ADD, ACTION_CLEAR, DynamicOutputPanel
+from apparun.gui.panels.base import (
+    ACTION_ADD,
+    ACTION_CLEAR,
+    DynamicOutputPanel,
+    register_panel,
+)
 from apparun.impact_model import ImpactModel
 from apparun.results import ImpactModelResult, ScenarioComparisonResult
 
 
+@register_panel("scenario_comparison_dynamic_output_panel")
 class ScenarioComparisonDynamicOutputPanel(DynamicOutputPanel):
     type: Literal["scenario_comparison_dynamic_output_panel"]
     result: Optional[ImpactModelResult] = None
