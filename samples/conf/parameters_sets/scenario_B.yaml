@@ -1,0 +1,3 @@
+lifespan: 3
+architecture: Pascal
+cuda_core: 1024
