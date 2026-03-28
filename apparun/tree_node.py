@@ -116,6 +116,9 @@ class NodeScores(BaseModel):
             direct_impact_scores.append(direct_impact_score)
         return direct_impact_scores
 
+    def __getitem__(self, method_name):
+        return self.lcia_scores[method_name]
+
     def to_unpivoted_df(self) -> pd.DataFrame:
         df = self.lcia_scores.to_unpivoted_df()
         df["name"] = self.name

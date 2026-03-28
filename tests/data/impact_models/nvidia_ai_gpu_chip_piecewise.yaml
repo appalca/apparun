@@ -1,0 +1,109 @@
+metadata:
+  author:
+    name: Maxime PERALTA
+    organization: CEA
+    mail: maxime.peralta@cea.fr
+  reviewer:
+    name: Mathias TORCASO
+    organization: CEA
+    mail: null
+  report:
+    link: https://appalca.github.io/
+    description: A mock example of Appa LCA's impact model corresponding to a fictive
+      AI chip accelerator based on NVIDIA GPU.
+    date: 07/10/2025
+    version: '1'
+    license: proprietary
+    appabuild_version: 0.3.6
+parameters:
+- name: architecture
+  default: Maxwell
+  type: enum
+  weights:
+    Maxwell: 1.0
+    Pascal: 1.0
+- name: cuda_core
+  default:
+    architecture:
+      Maxwell: 1344
+      Pascal: 1280
+  type: float
+  min: 256.0
+  max: 4096.0
+  distrib: linear
+  pm: null
+  pm_perc: null
+- name: energy_per_inference
+  default:
+    architecture:
+      Maxwell: Piecewise((0, cuda_core > 1300), (0.1*cuda_core*1000/(90*3600), True))
+      Pascal: 0.0679*cuda_core*1000/(90*3600)
+  type: float
+  min: null
+  max: null
+  distrib: linear
+  pm: null
+  pm_perc: 0.2
+- name: inference_per_day
+  default: 30*3600*8
+  type: float
+  min: 0.0
+  max: 86400000.0
+  distrib: linear
+  pm: null
+  pm_perc: null
+- name: lifespan
+  default: Piecewise((2, cuda_core > 1300), (0, architecture_Pascal), (5, True))
+  type: float
+  min: null
+  max: null
+  distrib: linear
+  pm: 1.0
+  pm_perc: null
+- name: usage_location
+  default: FR
+  type: enum
+  weights:
+    FR: 1.0
+    EU: 1.0
+tree:
+  name: nvidia_ai_gpu_chip_piecewise
+  models:
+    EFV3_CLIMATE_CHANGE: 1.0*energy_per_inference*inference_per_day*lifespan*(7.560675e-5*usage_location_EU
+      + 1.7532e-5*usage_location_FR) - 12500.0*architecture_Maxwell*(-4.6212599075297227e-9*cuda_core
+      - 7.37132179656539e-6)*Piecewise((1, lifespan < 3), (2, lifespan < 4), (0, True))
+      + 1.90904456522695e-5*architecture_Maxwell*(0.1889809692866578*cuda_core + 19.47688243064738)**2*Piecewise((1,
+      lifespan < 3), (2, lifespan < 4), (0, True))/((1 - 0.9980542072708582*exp(-1.889809692866578e-5*cuda_core))**2*(70685.775/(0.1889809692866578*cuda_core
+      + 19.47688243064738) - 471.2385*sqrt(2)/sqrt(0.1889809692866578*cuda_core +
+      19.47688243064738))) - 12500.0*architecture_Pascal*(-4.6891975579761074e-9*cuda_core
+      - 7.808281424221127e-6)*Piecewise((1, lifespan < 3), (2, lifespan < 4), (0,
+      True)) + 0.00055747322513291*architecture_Pascal*(0.13184623155305694*cuda_core
+      + 21.707425626610416)**2*Piecewise((1, lifespan < 3), (2, lifespan < 4), (0,
+      True))/((1 - 0.98920497620445418*exp(-6.5923115776528471e-5*cuda_core))**2*(70685.775/(0.13184623155305694*cuda_core
+      + 21.707425626610416) - 471.2385*sqrt(2)/sqrt(0.13184623155305694*cuda_core
+      + 21.707425626610416)))
+  children:
+  - name: ai_use_phase
+    models:
+      EFV3_CLIMATE_CHANGE: 1.0*energy_per_inference*inference_per_day*lifespan*(7.560675e-5*usage_location_EU
+        + 1.7532e-5*usage_location_FR)
+    children: []
+    properties: {}
+    amount: '1.0'
+  - name: nvidia_gpu_chip_manufacturing
+    models:
+      EFV3_CLIMATE_CHANGE: 1.0*(-12500.0*architecture_Maxwell*(-4.6212599075297227e-9*cuda_core
+        - 7.37132179656539e-6) + 1.90904456522695e-5*architecture_Maxwell*(0.1889809692866578*cuda_core
+        + 19.47688243064738)**2/((1 - 0.9980542072708582*exp(-1.889809692866578e-5*cuda_core))**2*(70685.775/(0.1889809692866578*cuda_core
+        + 19.47688243064738) - 471.2385*sqrt(2)/sqrt(0.1889809692866578*cuda_core
+        + 19.47688243064738))) - 12500.0*architecture_Pascal*(-4.6891975579761074e-9*cuda_core
+        - 7.808281424221127e-6) + 0.00055747322513291*architecture_Pascal*(0.13184623155305694*cuda_core
+        + 21.707425626610416)**2/((1 - 0.98920497620445418*exp(-6.5923115776528471e-5*cuda_core))**2*(70685.775/(0.13184623155305694*cuda_core
+        + 21.707425626610416) - 471.2385*sqrt(2)/sqrt(0.13184623155305694*cuda_core
+        + 21.707425626610416))))*Piecewise((1, lifespan < 3), (2, lifespan < 4), (0,
+        True))
+    children: []
+    properties: {}
+    amount: Piecewise((1, lifespan < 3), (2, lifespan < 4), (0, True))
+  properties: {}
+  amount: '1.0'

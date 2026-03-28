@@ -7,10 +7,8 @@ from __future__ import annotations
 import math
 import re
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Self, Union
-
-if TYPE_CHECKING:
-    from apparun.parameters import ImpactModelParams
+from collections import defaultdict
+from typing import Any, Dict, List, Self, Union
 
 import networkx as nx
 import numpy
@@ -21,6 +19,8 @@ from pydantic_core.core_schema import ValidationInfo
 from sympy import Expr, sympify
 
 from apparun.exceptions import InvalidExpr
+from apparun.logger import logger
+from apparun.parameters import ImpactModelParams
 
 
 def parse_expr(expr: Any) -> Expr:
@@ -41,7 +41,7 @@ def validate_expr(expr: str) -> bool:
     """
     Check if an expression is a valid arithmetic expression that
     can be used in an impact model. Allowed functions inside an
-    expression are only functions of the modules math and numpy.
+    expression are only functions of the modules math, numpy and sympy.
 
     :param expr: an expression.
     :returns: True if the expression is a valid arithmetic expression, else False.
@@ -52,7 +52,7 @@ def validate_expr(expr: str) -> bool:
         "NUMBER": r"\-?\d+(\.\d+(e\-?\d+)?)?",
         "L_PAREN": r"\(",
         "R_PAREN": r"\)",
-        "OP": r"\+|\-|\*{1,2}|/{1,2}|%",
+        "OP": r"\+|\-|\*{1,2}|/{1,2}|%|/|<=?|>=?|={2}",
         "COMMA": r",",
         "WS": r"\s+",
     }
@@ -94,7 +94,7 @@ def validate_expr(expr: str) -> bool:
             valid = False
 
     fun_names = re.findall(tokens_patterns["FUN_ID"], expr)
-    allowed_funcs = dir(math) + dir(numpy)
+    allowed_funcs = dir(math) + dir(numpy) + dir(sympy)
     return valid and nb_paren == 0 and all(fun in allowed_funcs for fun in fun_names)
 
 
@@ -105,6 +105,7 @@ class ParamsValuesSet(BaseModel):
     """
 
     expressions: Dict[str, ParamExpr]
+    parameters: ImpactModelParams
 
     def __getitem__(self, item):
         if item not in self.expressions:
@@ -151,7 +152,9 @@ class ParamsValuesSet(BaseModel):
                     )
         if errors:
             raise ValidationError.from_exception_data("", line_errors=errors)
-        return ParamsValuesSet(**{"expressions": parsed_expressions})
+        return ParamsValuesSet(
+            **{"expressions": parsed_expressions, "parameters": parameters}
+        )
 
     @property
     def dependencies_graph(self) -> nx.DiGraph:
@@ -160,13 +163,23 @@ class ParamsValuesSet(BaseModel):
 
         :returns: an oriented graph representing the dependencies between the expressions.
         """
-        return nx.DiGraph(
-            [
-                (name, dep)
-                for name, expr in self.expressions.items()
-                for dep in expr.dependencies
-            ]
-        )
+        graph_nodes = [
+            (name, dep)
+            for name, expr in self.expressions.items()
+            for dep in expr.dependencies
+        ]
+        graph_nodes = [
+            (
+                self.parameters.find_corresponding_parameter(
+                    param[0], must_find_one=True
+                ).name,
+                self.parameters.find_corresponding_parameter(
+                    param[1], must_find_one=True
+                ).name,
+            )
+            for param in graph_nodes
+        ]
+        return nx.DiGraph(graph_nodes)
 
     def dependencies_cycle(self) -> List[str]:
         """
@@ -204,7 +217,10 @@ class ParamsValuesSet(BaseModel):
             }
 
             values[name] = self.expressions[name].evaluate(deps_values)
-
+            if self.parameters[name].type == "enum":
+                oh_values = self.parameters[name].transform(values[name])
+                for enum_option, oh_value in oh_values.items():
+                    values[enum_option] = oh_value
         return values
 
 
@@ -352,35 +368,29 @@ class ParamFloatExpr(ParamExpr):
         """
         parameters = info.context["parameters"]
         # Check all the dependencies are parameters of the impact model
-        invalid_deps = sorted(set(self.dependencies) - set(parameters.names))
-        if invalid_deps:
-            raise PydanticCustomError(
-                "no_such_param",
-                "No such parameters: {invalid_parameters}",
-                {"invalid_parameters": tuple(invalid_deps)},
-            )
-        # Check all the dependencies are float type parameters
-        non_float_deps = sorted(
-            [
-                dep
-                for dep in self.dependencies
-                if dep not in parameters[dep].type != "float"
-            ]
-        )
-        if non_float_deps:
-            raise PydanticCustomError(
-                "dependencies_type",
-                "Invalid type for the dependencies {invalid_parameters}, expected type {required_type}",
-                {
-                    "invalid_parameters": tuple(non_float_deps),
-                    "required_type": "float",
-                },
-            )
+        for dep in self.dependencies:
+            try:
+                parameters.find_corresponding_parameter(dep, must_find_one=True)
+            except ValueError:
+                raise PydanticCustomError(
+                    "no_such_param",
+                    "No such parameter: {invalid_parameters}",
+                    {"invalid_parameter": dep},
+                )
+            if dep in [param.name for param in parameters if param.type == "enum"]:
+                raise PydanticCustomError(
+                    "dependencies_type",
+                    "Invalid type for the dependency {invalid_parameter}, expected type {required_type}",
+                    {
+                        "invalid_parameter": dep,
+                        "required_type": "float or dummy",
+                    },
+                )
         return self
 
     @property
     def dependencies(self) -> List[str]:
-        return re.findall(r"[a-zA-Z_]+\b(?!\()", self.expr)
+        return [str(symbol) for symbol in parse_expr(self.expr).free_symbols]
 
     @property
     def is_complex(self) -> bool:
@@ -519,3 +529,185 @@ class ParamEnumExpr(ParamExpr):
         return self.options[dependencies_values[self.param]].evaluate(
             dependencies_values
         )
+
+
+class ImpactModelParamsValues(BaseModel):
+    """
+    A set of values for the parameters of an impact model.
+
+    ATTENTION!! Use the method from dict to build instance of this class.
+    """
+
+    values: Dict[str, List[Union[float, int, str]]]
+
+    def __getitem__(self, item):
+        if item in self.values.keys():
+            return self.values[item]
+        else:
+            raise KeyError()
+
+    @classmethod
+    def from_dict(
+        cls,
+        parameters: ImpactModelParams,
+        values: Dict[
+            str, Union[float, int, str, dict, List[Union[float, int, str, dict]]]
+        ],
+    ) -> ImpactModelParamsValues:
+        # Values with the default values for the parameters not in the values
+        all_values = {
+            **values,
+            **{
+                param.name: param.default
+                for param in parameters
+                if param.name not in values
+            },
+        }
+        # Step 1 - Transform all values into lists
+        empty_list_values = [
+            name
+            for name, value in values.items()
+            if isinstance(value, list) and len(value) == 0
+        ]
+        if empty_list_values:
+            raise ValidationError.from_exception_data(
+                "",
+                line_errors=[
+                    {
+                        "loc": ("values",),
+                        "msg": "",
+                        "type": PydanticCustomError(
+                            "empty_list",
+                            "The value for the parameter {parameter} can't be an empty list",
+                            {"parameter": name},
+                        ),
+                    }
+                    for name in empty_list_values
+                ],
+            )
+
+        list_values = [value for value in values.values() if isinstance(value, list)]
+        if any(
+            len(list_values[0]) != len(list_values[i])
+            for i in range(1, len(list_values))
+        ):
+            raise ValidationError.from_exception_data(
+                "",
+                line_errors=[
+                    {
+                        "loc": ("values",),
+                        "msg": "",
+                        "type": PydanticCustomError(
+                            "lists_size_match", "List values must have matching sizes"
+                        ),
+                    }
+                ],
+            )
+
+        size = max(map(len, list_values)) if list_values else 1
+        list_values = {
+            name: value if isinstance(value, list) else [value] * size
+            for name, value in all_values.items()
+        }
+
+        # Step 2 - Transform the values to expressions
+        exprs_sets = []
+        for idx in range(size):
+            exprs_sets.append(
+                ParamsValuesSet.build(
+                    {name: value[idx] for name, value in list_values.items()},
+                    parameters,
+                )
+            )
+
+        # Step 3 - Dependencies cycles detection
+        for exprs_set in exprs_sets:
+            try:
+                cycle = exprs_set.dependencies_cycle()
+                if cycle:
+                    raise ValidationError.from_exception_data(
+                        "",
+                        line_errors=[
+                            {
+                                "loc": ("values",),
+                                "msg": "",
+                                "type": PydanticCustomError(
+                                    "dependencies_cycle",
+                                    "The expressions for the parameters {parameters} are inter-dependent",
+                                    {"parameters": tuple(sorted(cycle))},
+                                ),
+                            }
+                        ],
+                    )
+            except nx.NetworkXNoCycle:
+                pass
+
+        # Step 4 - Expressions' evaluation
+        final_values = defaultdict(list)
+        for exprs_set in exprs_sets:
+            evals = exprs_set.evaluate()
+            for name, value in evals.items():
+                # Remove any dummy, if any
+                if name in parameters.names:
+                    final_values[name].append(value)
+
+        # Step 5 - Validation of the final values
+        errors = []
+        for name, value in final_values.items():
+            for idx, elem in enumerate(value):
+                parameter = parameters[name]
+                match parameter.type:
+                    case "float":
+                        if parameter.min is None or parameter.max is None:
+                            logger.warning(
+                                f"Parameter {parameter.name} does not have valid bounds. "
+                                f"Consider calling update_bounds()."
+                            )
+                        elif elem < parameter.min or elem > parameter.max:
+                            if exprs_sets[idx][name].is_complex:
+                                logger.warning(
+                                    "The value %s (got after evaluating the expression %s) for the parameter %s is outside its [min, max] range",
+                                    str(elem),
+                                    name,
+                                    str(exprs_sets[idx][name].raw_version),
+                                )
+                            else:
+                                logger.warning(
+                                    "The value %s for the parameter %s is outside its [min, max] range",
+                                    str(elem),
+                                    name,
+                                )
+                    case "enum" if elem not in parameter.options:
+                        if exprs_sets[idx][name].is_complex:
+                            errors.append(
+                                {
+                                    "type": PydanticCustomError(
+                                        "value_error",
+                                        "Invalid value {value}, got after evaluating the expression {expr}, for the parameter {target_parameter}",
+                                        {
+                                            "value": elem,
+                                            "target_parameter": name,
+                                            "expr": str(
+                                                exprs_sets[idx][name].raw_version
+                                            ),
+                                        },
+                                    )
+                                }
+                            )
+                        else:
+                            errors.append(
+                                {
+                                    "type": PydanticCustomError(
+                                        "value_error",
+                                        "Invalid value {value} for the parameter {target_parameter}",
+                                        {"value": elem, "target_parameter": name},
+                                    )
+                                }
+                            )
+        if errors:
+            raise ValidationError.from_exception_data("", line_errors=errors)
+
+        return ImpactModelParamsValues(**{"values": final_values})
+
+    def items(self):
+        return self.values.items()

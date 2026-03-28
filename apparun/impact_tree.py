@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Self, Union
 import numpy as np
 from pydantic import BaseModel, ValidationError, field_validator
 from pydantic_core import PydanticCustomError
-from sympy import Expr, lambdify
+from sympy import Expr, Piecewise, lambdify
 
 from apparun.exceptions import InvalidExpr
 from apparun.expressions import parse_expr
