@@ -1,10 +1,9 @@
 FROM python:3.12-slim-trixie
 
 RUN apt-get -y update && apt-get -y upgrade && apt-get install -y git
-RUN git clone https://github.com/appalca/apparun.git
-RUN pip install -r apparun/requirements.txt
-
-WORKDIR apparun
+WORKDIR /apparun                                      
+COPY . .                                                           
+RUN pip install -r requirements.txt
 
 RUN python -m hatchling build
 RUN pip install dist/*.whl --progress-bar off
