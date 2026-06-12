@@ -39,6 +39,15 @@ class LcaStudy(BaseModel):
     appabuild_version: Optional[str] = None
 
 
+class CustomIndicator(BaseModel):
+    """
+    Any indicator that is not a native LCIA method supported by Brightway.
+    """
+
+    name: str
+    unit: str
+
+
 class ModelMetadata(BaseModel):
     """
     Contain information various information about the context of production of the
@@ -75,6 +84,7 @@ class ImpactModel(BaseModel):
 
     metadata: Optional[ModelMetadata] = None
     parameters: Optional[ImpactModelParams] = None
+    custom_indicators: Optional[List[CustomIndicator]] = []
     tree: Optional[ImpactTreeNode] = None
 
     @property
@@ -120,6 +130,10 @@ class ImpactModel(BaseModel):
         return {
             "metadata": self.metadata.to_dict(),
             "parameters": self.parameters.to_list(sorted_by_name=True),
+            "custom_indicators": [
+                custom_indicator.model_dump()
+                for custom_indicator in self.custom_indicators
+            ],
             "tree": self.tree.to_dict(),
         }
 
@@ -145,6 +159,12 @@ class ImpactModel(BaseModel):
             return ImpactModel(
                 metadata=ModelMetadata.from_dict(impact_model["metadata"]),
                 parameters=ImpactModelParams.from_list(impact_model["parameters"]),
+                custom_indicators=[
+                    CustomIndicator(**custom_indicator)
+                    for custom_indicator in impact_model["custom_indicators"]
+                ]
+                if "custom_indicators" in impact_model
+                else [],
                 tree=ImpactTreeNode.from_dict(impact_model["tree"]),
             )
         except KeyError:
