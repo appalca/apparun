@@ -130,11 +130,11 @@ class ImpactModel(BaseModel):
         return {
             "metadata": self.metadata.to_dict(),
             "parameters": self.parameters.to_list(sorted_by_name=True),
-            "tree": self.tree.to_dict(),
             "custom_indicators": [
                 custom_indicator.model_dump()
                 for custom_indicator in self.custom_indicators
             ],
+            "tree": self.tree.to_dict(),
         }
 
     def to_yaml(self, filepath: str, compile_models: bool = True):
@@ -159,13 +159,13 @@ class ImpactModel(BaseModel):
             return ImpactModel(
                 metadata=ModelMetadata.from_dict(impact_model["metadata"]),
                 parameters=ImpactModelParams.from_list(impact_model["parameters"]),
-                tree=ImpactTreeNode.from_dict(impact_model["tree"]),
                 custom_indicators=[
                     CustomIndicator(**custom_indicator)
                     for custom_indicator in impact_model["custom_indicators"]
                 ]
                 if "custom_indicators" in impact_model
                 else [],
+                tree=ImpactTreeNode.from_dict(impact_model["tree"]),
             )
         except KeyError:
             logger.error("Impossible to create impact model from dict, missing key")
