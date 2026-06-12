@@ -39,6 +39,15 @@ class LcaStudy(BaseModel):
     appabuild_version: Optional[str] = None
 
 
+class CustomIndicator(BaseModel):
+    """
+    Any indicator that is not a native LCIA method supported by Brightway.
+    """
+
+    name: str
+    unit: str
+
+
 class ModelMetadata(BaseModel):
     """
     Contain information various information about the context of production of the
@@ -75,6 +84,7 @@ class ImpactModel(BaseModel):
 
     metadata: Optional[ModelMetadata] = None
     parameters: Optional[ImpactModelParams] = None
+    custom_indicators: Optional[List[CustomIndicator]] = []
     tree: Optional[ImpactTreeNode] = None
 
     @property
@@ -121,6 +131,10 @@ class ImpactModel(BaseModel):
             "metadata": self.metadata.to_dict(),
             "parameters": self.parameters.to_list(sorted_by_name=True),
             "tree": self.tree.to_dict(),
+            "custom_indicators": [
+                custom_indicator.model_dump()
+                for custom_indicator in self.custom_indicators
+            ],
         }
 
     def to_yaml(self, filepath: str, compile_models: bool = True):
@@ -146,6 +160,12 @@ class ImpactModel(BaseModel):
                 metadata=ModelMetadata.from_dict(impact_model["metadata"]),
                 parameters=ImpactModelParams.from_list(impact_model["parameters"]),
                 tree=ImpactTreeNode.from_dict(impact_model["tree"]),
+                custom_indicators=[
+                    CustomIndicator(**custom_indicator)
+                    for custom_indicator in impact_model["custom_indicators"]
+                ]
+                if "custom_indicators" in impact_model
+                else [],
             )
         except KeyError:
             logger.error("Impossible to create impact model from dict, missing key")
