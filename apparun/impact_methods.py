@@ -108,7 +108,7 @@ class MethodShortName(str, Enum):
     _settings_ = NoAlias
 
     # EFV3
-    EFV3_ACIDIFICATION = "Acification (AE)"
+    EFV3_ACIDIFICATION = "Acidification (AE)"
     EFV3_CLIMATE_CHANGE = "Climate change (GWP100)"
     EFV3_CLIMATE_CHANGE_BIOGENIC = "Climate change: biogenic (GWP100)"
     EFV3_CLIMATE_CHANGE_FOSSIL = "Climate change: fossil (GWP100)"
@@ -154,7 +154,7 @@ class MethodShortName(str, Enum):
     EFV3_WATER_USE = "Depr.-weighted water cons. (kg world eq. deprived)"
 
     # EFV31
-    EFV31_ACIDIFICATION = "Acification (AE)"
+    EFV31_ACIDIFICATION = "Acidification (AE)"
     EFV31_CLIMATE_CHANGE = "Climate change (GWP100)"
     EFV31_CLIMATE_CHANGE_BIOGENIC = "Climate change: biogenic (GWP100)"
     EFV31_CLIMATE_CHANGE_FOSSIL = "Climate change: fossil (GWP100)"
