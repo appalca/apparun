@@ -47,8 +47,12 @@ class NodeScores(BaseModel):
 
     name: str
     "Node name/property value, if results have been combined by property value."
+    uuid: Optional[str] = None
+    "uuid of node."
     parent: str
     "Name of parent node."
+    parent_uuid: Optional[str] = None
+    "uuid of parent node."
     properties: NodeProperties
     "Properties of the node."
     lcia_scores: LCIAScores
@@ -103,13 +107,15 @@ class NodeScores(BaseModel):
                 [
                     nd_sc.lcia_scores
                     for nd_sc in node_scores
-                    if nd_sc.parent == node_score.name
+                    if nd_sc.parent_uuid == node_score.uuid
                 ]
             )
             direct_lcia_scores = node_score.lcia_scores - to_substract
             direct_impact_score = NodeScores(
                 name=node_score.name,
+                uuid=node_score.uuid,
                 parent=node_score.parent,
+                parent_uuid=node_score.parent_uuid,
                 properties=node_score.properties,
                 lcia_scores=direct_lcia_scores,
             )

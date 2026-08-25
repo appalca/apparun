@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from typing import Callable, Dict, List, Optional, Union
 
 import numpy as np
@@ -239,8 +240,14 @@ class ImpactModel(BaseModel):
         scores = [
             NodeScores(
                 name=node.name,
+                uuid=str(uuid.uuid5(uuid.NAMESPACE_DNS, str(node.to_dict()))),
                 properties=node.properties,
                 parent=node.parent.name if node.parent is not None else "",
+                parent_uuid=str(
+                    uuid.uuid5(uuid.NAMESPACE_DNS, str(node.parent.to_dict()))
+                )
+                if node.parent is not None
+                else "",
                 lcia_scores=node.compute(
                     transformed_params,
                 ),
