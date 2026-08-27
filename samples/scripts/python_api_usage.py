@@ -112,6 +112,19 @@ scenario_comparison_result = get_result("scenario_comparison")(
 scenario_comparison_table = scenario_comparison_result.get_table()
 scenario_comparison_result.get_figure(scenario_comparison_table, save=True)
 
+heatmap_result = get_result("heatmap")(
+    impact_model=impact_model,
+    impact_method="EFV3_CLIMATE_CHANGE",
+    x_parameter={"name": "cuda_core", "min": 256, "max": 2048},
+    y_parameter={"name": "lifespan", "min": 1, "max": 5},
+    output_name="heatmap",
+    pdf_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
+    table_save_path=os.path.join(OUTPUT_FILES_PATH, "tables/"),
+    html_save_path=os.path.join(OUTPUT_FILES_PATH, "figures/"),
+)
+heatmap_table = heatmap_result.get_table()
+heatmap_result.get_figure(heatmap_table, save=True)
+
 
 # New types of results can be generated in user script, without modifying Appa Run
 # source code, thanks to register_result decorator.

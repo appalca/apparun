@@ -87,7 +87,9 @@ class Module(BaseModel):
         )
         if self.input_panel is not None:
             with self.input_col:
-                self.input_panel.run()
+                self.input_panel.run(
+                    impact_model=self.impact_model, lca_data=self.lca_data
+                )
             with self.output_col:
                 for output_panel in self.output_panels:
                     output_panel.run(

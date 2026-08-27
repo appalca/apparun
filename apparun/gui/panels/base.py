@@ -76,9 +76,6 @@ class Panel(BaseModel):
 
     st_component: Callable = None
 
-    def spawn(self):
-        return
-
     @property
     def state(self):
         return self._state
@@ -95,6 +92,14 @@ class DynamicOutputPanel(OutputPanel):
     type: Literal["dynamic_output_panel"]
     result: Optional[ImpactModelResult] = None
 
+    def run(
+        self,
+        entry_data,
+        impact_model: Optional[ImpactModel] = None,
+        lca_data: Optional[pd.DataFrame] = None,
+    ):
+        return
+
     def compute_from_impact_model(self, entry_data, impact_model):
         return
 
@@ -103,7 +108,7 @@ class DynamicOutputPanel(OutputPanel):
 
     def get_results(
         self,
-        entry_data,
+        entry_data: Dict,
         impact_model: ImpactModel = None,
         lca_data: pd.DataFrame = None,
     ):
@@ -119,7 +124,11 @@ class DynamicOutputPanel(OutputPanel):
 class StaticOutputPanel(OutputPanel):
     type: Literal["static_output_panel"]
 
-    def run(self, impact_model: ImpactModel = None, lca_data: pd.DataFrame = None):
+    def run(
+        self,
+        impact_model: Optional[ImpactModel] = None,
+        lca_data: Optional[pd.DataFrame] = None,
+    ):
         return
 
 
@@ -131,13 +140,17 @@ class InputPanel(Panel):
         super().__init__(**args)
         self._uuid = uuid.uuid4().hex
 
-    def submit(self):
+    def run(
+        self,
+        impact_model: Optional[ImpactModel] = None,
+        lca_data: Optional[pd.DataFrame] = None,
+    ):
         return
 
 
 @register_panel("input_scenario_form_panel")
 class InputScenarioFormPanel(InputPanel):
-    fields: Optional[List[Dict[str, Any]]] = []
+    fields: Optional[List[Dict[str, Any]]] = None
     type: Literal["input_scenario_form_panel"]
 
     def __init__(self, **args):
@@ -145,7 +158,11 @@ class InputScenarioFormPanel(InputPanel):
         self._state["parameters"] = {}
         self._state["action"] = None
 
-    def run(self):
+    def run(
+        self,
+        impact_model: Optional[ImpactModel] = None,
+        lca_data: Optional[pd.DataFrame] = None,
+    ):
         self.st_component = st.form(self._uuid)
 
         if self.name is not None:
@@ -154,19 +171,32 @@ class InputScenarioFormPanel(InputPanel):
         self._state["scenario_name"] = self.st_component.text_input(
             label="Scenario name"
         )
-        for input_field in self.fields:
-            if input_field["type"] == "float":
+        selected_params = (
+            self.fields
+            if self.fields is not None
+            else impact_model.parameters.to_list()
+        )
+
+        for selected_param in selected_params:
+            if selected_param["type"] == "float":
                 self._state["parameters"][
-                    input_field["name"]
+                    selected_param["name"]
                 ] = self.st_component.text_input(
-                    label=input_field["name"], value=input_field["default"]
+                    label=selected_param["name"], value=selected_param["default"]
                 )
-            if input_field["type"] == "enum":
+            if selected_param["type"] == "enum":
+                options = (
+                    selected_param["options"]
+                    if self.fields is not None
+                    else selected_param["weights"].keys()
+                )
+
                 self._state["parameters"][
-                    input_field["name"]
+                    selected_param["name"]
                 ] = self.st_component.selectbox(
-                    label=input_field["name"], options=input_field["options"]
+                    label=selected_param["name"], options=options
                 )
+
         col_button1, col_button2 = st.columns(2)
         with col_button1:
             scenarios_add = self.st_component.form_submit_button("Add")
@@ -176,3 +206,90 @@ class InputScenarioFormPanel(InputPanel):
             self._state["action"] = ACTION_ADD
         if scenarios_clear:
             self._state["action"] = ACTION_CLEAR
+
+
+@register_panel("selectable_input_range_form_panel")
+class SelectableInputRangeFormPanel(InputPanel):
+    dimensions: Optional[int] = 2
+    type: Literal["selectable_input_range_form_panel"]
+
+    def __init__(self, **args):
+        super().__init__(**args)
+        self._state["parameters"] = {}
+        self._state["action"] = None
+
+    def run(
+        self,
+        impact_model: Optional[ImpactModel] = None,
+        lca_data: Optional[pd.DataFrame] = None,
+    ):
+        self.st_component = st.form(self._uuid)
+
+        if self.name is not None:
+            self.st_component.markdown(f"### {self.name}")
+
+        for i in range(self.dimensions):
+            col_button1, col_button2, col_button3 = self.st_component.columns(
+                [0.5, 0.25, 0.25]
+            )
+            selected_param = {}
+            selected_param["name"] = col_button1.selectbox(
+                label=f"Param {i + 1}",
+                options=[
+                    parameter.name
+                    for parameter in impact_model.parameters
+                    if parameter.type == "float"
+                ],
+            )
+            selected_param["min"] = float(
+                col_button2.text_input(label="Min", value=0, key=f"{i}-min")
+            )
+            selected_param["max"] = float(
+                col_button3.text_input(label="Max", value=0, key=f"{i}-max")
+            )
+            self._state["parameters"][str(i)] = selected_param
+
+        scenarios_add = self.st_component.form_submit_button("Compute")
+
+        if scenarios_add:
+            self._state["action"] = ACTION_ADD
+
+
+@register_panel("input_range_form_panel")
+class InputRangeFormPanel(InputPanel):
+    fields: Dict[str, Dict[str, Any]]
+    type: Literal["input_range_form_panel"]
+
+    def __init__(self, **args):
+        super().__init__(**args)
+        self._state["parameters"] = self.fields
+        self._state["action"] = None
+
+    def run(
+        self,
+        impact_model: Optional[ImpactModel] = None,
+        lca_data: Optional[pd.DataFrame] = None,
+    ):
+        self.st_component = st.form(self._uuid)
+
+        if self.name is not None:
+            self.st_component.markdown(f"### {self.name}")
+
+        for param_axis, param in self.fields.items():
+            self.st_component.markdown(f'{param["name"]}')
+
+            self._state["parameters"][param_axis]["min"] = float(
+                self.st_component.text_input(
+                    label="Min", value=param["min"], key=f"{param_axis}-min"
+                )
+            )
+            self._state["parameters"][param_axis]["max"] = float(
+                self.st_component.text_input(
+                    label="Max", value=param["max"], key=f"{param_axis}-max"
+                )
+            )
+
+        scenarios_add = self.st_component.form_submit_button("Compute")
+
+        if scenarios_add:
+            self._state["action"] = ACTION_ADD
