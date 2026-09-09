@@ -64,7 +64,7 @@ def validate_expr(expr: str) -> bool:
         "L_PAREN": ["OP", "ID", "L_PAREN", "COMMA", "FUN_ID"],
         "R_PAREN": ["NUMBER", "ID", "R_PAREN"],
         "COMMA": ["NUMBER", "ID", "R_PAREN"],
-        "OP": ["NUMBER", "ID", "R_PAREN"],
+        "OP": ["NUMBER", "ID", "L_PAREN", "R_PAREN"],
     }
 
     expr_copy = str(expr)
@@ -94,7 +94,7 @@ def validate_expr(expr: str) -> bool:
             valid = False
 
     fun_names = re.findall(tokens_patterns["FUN_ID"], expr)
-    allowed_funcs = dir(math) + dir(numpy)
+    allowed_funcs = dir(math) + dir(numpy.core) + dir(sympy.functions)
     return valid and nb_paren == 0 and all(fun in allowed_funcs for fun in fun_names)
 
 

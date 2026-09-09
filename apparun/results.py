@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import itertools
 import os
 from typing import Any, Dict, List, Optional, Union
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -409,6 +411,55 @@ class ScenarioComparisonResult(ImpactModelResult):
     def get_figure(self, table: pd.DataFrame, save: bool = False):
         fig = px.bar(
             table, x="scenario_name", y="score", color="name", facet_row="method"
+        )
+        if save:
+            self.save_figure(fig)
+        return fig
+
+
+@register_result("heatmap")
+class HeatmapResult(ImpactModelResult):
+    x_parameter: Dict[str, Union[str, float]]
+    y_parameter: Dict[str, Union[str, float]]
+    resolution: Optional[int] = 64
+    impact_method: str
+
+    def get_table(self) -> pd.DataFrame:
+        df = list(
+            itertools.product(
+                list(
+                    np.arange(
+                        self.x_parameter["min"],
+                        self.x_parameter["max"],
+                        (self.x_parameter["max"] - self.x_parameter["min"])
+                        / self.resolution,
+                    )
+                ),
+                list(
+                    np.arange(
+                        self.y_parameter["min"],
+                        self.y_parameter["max"],
+                        (self.y_parameter["max"] - self.y_parameter["min"])
+                        / self.resolution,
+                    )
+                ),
+            )
+        )
+        df = pd.DataFrame(
+            df, columns=[self.x_parameter["name"], self.y_parameter["name"]]
+        )
+        scores = self.impact_model.get_scores(**df.to_dict(orient="list"))
+        df["score"] = scores.scores[self.impact_method]
+        df = df.pivot(
+            index=self.x_parameter["name"],
+            columns=self.y_parameter["name"],
+            values="score",
+        )
+        return df
+
+    def get_figure(self, table: pd.DataFrame, save: bool = False):
+        fig = px.imshow(
+            table, text_auto=False, aspect="auto", color_continuous_scale="RdBu_r"
         )
         if save:
             self.save_figure(fig)

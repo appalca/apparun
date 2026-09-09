@@ -37,6 +37,9 @@ def test_valid_exprs():
         "3*a_",
         "3*a_1",
         "3*_a1",
+        "Abs(a)",
+        "abs(a)",
+        "1-exp(-defect_density*area)",
     ]
 
     for expr in exprs:

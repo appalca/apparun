@@ -27,6 +27,7 @@ PandasDataFrame = TypeVar("pd.core.frame.DataFrame")
 
 class Module(BaseModel):
     name: Optional[str] = None
+    tab: Optional[str] = None
     lca_data_path: Optional[str] = None
     impact_model_path: Optional[str] = None
     input_panel: Optional[InputPanel] = None
@@ -86,7 +87,9 @@ class Module(BaseModel):
         )
         if self.input_panel is not None:
             with self.input_col:
-                self.input_panel.run()
+                self.input_panel.run(
+                    impact_model=self.impact_model, lca_data=self.lca_data
+                )
             with self.output_col:
                 for output_panel in self.output_panels:
                     output_panel.run(
@@ -105,6 +108,7 @@ class Module(BaseModel):
 class GUI(BaseModel):
     name: Optional[str] = None
     favicon_path: Optional[str] = None
+    tabs: Optional[List[str]] = None
     modules: List[Module]
 
     def setup_layout(self):
@@ -127,18 +131,7 @@ class GUI(BaseModel):
             """
         )
 
-    def gen_titles_modules(self):
-        if self.name is not None:
-            self.modules.insert(
-                0,
-                Module(
-                    **{
-                        "output_panels": [
-                            {"type": "markdown", "message": f"# {self.name}"}
-                        ]
-                    }
-                ),
-            )
+    def gen_titles_modules(self, tabs):
         modules_with_titles = []
         for module in self.modules:
             if module.name is None:
@@ -149,7 +142,8 @@ class GUI(BaseModel):
                         **{
                             "output_panels": [
                                 {"type": "markdown", "message": f"## {module.name}"}
-                            ]
+                            ],
+                            "tab": module.tab,
                         }
                     )
                 )
@@ -157,8 +151,25 @@ class GUI(BaseModel):
         self.modules = modules_with_titles
 
     def run(self):
-        self.gen_titles_modules()
-        containers = [st.container() for i in range(len(self.modules))]
-        for i in range(len(self.modules)):
-            with containers[i]:
-                self.modules[i].run()
+        if self.name is not None:
+            Module(
+                **{"output_panels": [{"type": "markdown", "message": f"# {self.name}"}]}
+            ).run()
+        self.gen_titles_modules(self.tabs)
+        if self.tabs is not None:
+            tabs = st.tabs(self.tabs)
+            for i in range(len(self.tabs)):
+                tab_name = self.tabs[i]
+                with tabs[i]:
+                    tab_modules = [
+                        module for module in self.modules if module.tab == tab_name
+                    ]
+                    containers = [tabs[i].container() for _ in range(len(tab_modules))]
+                    for j in range(len(tab_modules)):
+                        with containers[j]:
+                            tab_modules[j].run()
+        else:
+            containers = [st.container() for i in range(len(self.modules))]
+            for i in range(len(self.modules)):
+                with containers[i]:
+                    self.modules[i].run()

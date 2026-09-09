@@ -19,6 +19,12 @@ def run_test_gui():
     gui()
 
 
+def run_multi_tab_test_gui():
+    from apparun.cli.main import generate_gui
+
+    generate_gui("tests/data/conf/functional_multi_tab_gui.yaml")
+
+
 def test_streamlit_app_is_deploying():
     """
     Check that the streamlit app initialized by sample conf is deploying.
@@ -28,6 +34,20 @@ def test_streamlit_app_is_deploying():
     at.run()
     # This app should generate seven md widgets: one page title, five header, one text block.
     assert len(at.markdown) == 7
+
+
+def test_multi_tab_streamlit_app_is_deploying():
+    """
+    Check that the streamlit app initialized by sample conf is deploying.
+    """
+
+    at = AppTest.from_function(run_multi_tab_test_gui, default_timeout=10)
+    at.run()
+    # five md widgets: one title, plus one header and one text block per tab.
+    assert len(at.tabs) == 2
+    assert len(at.tabs[0]) == 2
+    assert len(at.tabs[1]) == 2
+    assert len(at.markdown) == 5
 
 
 def test_favicons():
