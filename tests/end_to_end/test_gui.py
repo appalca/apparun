@@ -10,16 +10,22 @@ from apparun.cli.main import load_yaml
 from apparun.gui.modules import GUI
 
 
-def run_test_gui():
-    from apparun.cli.main import generate_gui
+def run_dynamic_gui():
+    import streamlit as st
 
-    generate_gui("tests/data/conf/functional_gui.yaml")
+    from apparun.cli.main import gui
+
+    st.query_params["gui_config_path"] = "tests/data/conf/functional_dynamic_gui.yaml"
+    gui()
 
 
 def run_multi_tab_test_gui():
-    from apparun.cli.main import generate_gui
+    import streamlit as st
 
-    generate_gui("tests/data/conf/functional_multi_tab_gui.yaml")
+    from apparun.cli.main import gui
+
+    st.query_params["gui_config_path"] = "tests/data/conf/functional_multi_tab_gui.yaml"
+    gui()
 
 
 def test_streamlit_app_is_deploying():
@@ -27,10 +33,10 @@ def test_streamlit_app_is_deploying():
     Check that the streamlit app initialized by sample conf is deploying.
     """
 
-    at = AppTest.from_function(run_test_gui, default_timeout=10)
+    at = AppTest.from_function(run_dynamic_gui, default_timeout=10)
     at.run()
-    # This app should generate three md widgets: one title, one header, one text block.
-    assert len(at.markdown) == 3
+    # This app should generate seven md widgets: one page title, five header, one text block.
+    assert len(at.markdown) == 9
 
 
 def test_multi_tab_streamlit_app_is_deploying():

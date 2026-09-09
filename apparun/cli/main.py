@@ -110,9 +110,29 @@ def results(results_config_file_path: str):
 
 
 @cli_app.command()
-def generate_gui(gui_config_path: str):
-    gui_config = load_yaml(gui_config_path, "r")
-    gui = GUI(**gui_config)
+def gui():
+    if "gui_config_path" not in st.query_params:
+        gui = GUI(
+            **{
+                "modules": [
+                    {
+                        "name": "Apparun GUI",
+                        "output_panels": [
+                            {
+                                "type": "markdown",
+                                "message": "Please indicate the path to the GUI configuration file in the "
+                                "URL, with the `gui_config_path` key. \n\nEx: "
+                                "`http://localhost:8501/?gui_config_path=samples/conf/sample_gui.yaml`",
+                            }
+                        ],
+                    }
+                ]
+            }
+        )
+    else:
+        gui_config_path = st.query_params["gui_config_path"]
+        gui_config = load_yaml(gui_config_path, "r")
+        gui = GUI(**gui_config)
     gui.setup_layout()
     gui.run()
 
